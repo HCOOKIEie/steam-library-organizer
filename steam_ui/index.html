@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0b1118" />
+  <script src="theme-bootstrap.js"></script>
+  <title>Steam 游戏库整理</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#workspace">跳到主要工作区</a>
+  <div class="ambient" aria-hidden="true">
+    <span class="ambient-orb ambient-orb-a"></span>
+    <span class="ambient-orb ambient-orb-b"></span>
+    <span class="ambient-grid"></span>
+  </div>
+
+  <header class="topbar" id="page-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <span class="brand-orbit"></span>
+        <span class="brand-core"></span>
+      </span>
+      <div class="brand-text">
+        <div class="brand-title-row">
+          <h1>Steam 游戏库整理</h1>
+          <span class="version-badge">DESKTOP</span>
+        </div>
+        <button id="account-line" class="account-line" type="button" title="点击选择 Steam 安装目录">
+          正在定位本机 Steam…
+        </button>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <span id="steam-pill" class="pill pill-wait" role="status">
+        <span class="pill-dot" aria-hidden="true"></span>
+        <span class="pill-label">正在检查 Steam…</span>
+      </span>
+      <button id="refresh-btn" class="icon-btn tooltip-host" type="button" aria-label="重新扫描" data-tooltip="重新扫描">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.3M20 4v7h-7" /></svg>
+      </button>
+      <div class="menu-host">
+        <button id="more-btn" class="icon-btn tooltip-host" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="更多操作" data-tooltip="更多操作">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+        </button>
+        <div id="more-menu" class="menu" role="menu" hidden>
+          <button id="choose-root-btn" class="menu-item" role="menuitem" type="button">
+            <span class="menu-icon">⌁</span><span>选择 Steam 目录</span>
+          </button>
+          <button id="reveal-btn" class="menu-item" role="menuitem" type="button">
+            <span class="menu-icon">↗</span><span>打开配置目录</span>
+          </button>
+          <button id="restore-btn" class="menu-item" role="menuitem" type="button" disabled>
+            <span class="menu-icon">↶</span><span>恢复最近备份</span>
+          </button>
+          <button id="open-log-btn" class="menu-item" role="menuitem" type="button">
+            <span class="menu-icon">≡</span><span>打开日志文件</span>
+          </button>
+          <span class="menu-separator" role="separator"></span>
+          <button id="theme-btn" class="menu-item menu-theme" role="menuitemcheckbox" aria-checked="false" aria-label="当前为深色模式，切换到亮色模式" type="button">
+            <span id="theme-icon" class="menu-icon" aria-hidden="true">☀</span>
+            <span class="menu-item-copy">
+              <span id="theme-label">切换到亮色模式</span>
+              <span id="theme-current" class="menu-hint">当前：深色</span>
+            </span>
+          </button>
+          <button id="privacy-btn" class="menu-item" role="menuitemcheckbox" aria-checked="false" type="button">
+            <span class="menu-icon">◉</span><span>临时显示完整账号</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="progress-rail" aria-label="整理流程">
+    <ol>
+      <li class="progress-step is-current" data-step="1"><span class="progress-index">1</span><span>读取数据</span></li>
+      <li class="progress-step" data-step="2"><span class="progress-index">2</span><span>选择规则</span></li>
+      <li class="progress-step" data-step="3"><span class="progress-index">3</span><span>审阅预览</span></li>
+      <li class="progress-step" data-step="4"><span class="progress-index">4</span><span>备份写入</span></li>
+    </ol>
+  </nav>
+
+  <main class="workspace" id="workspace">
+    <aside class="control-pane" aria-label="数据与分类规则">
+      <section class="control-section data-section" aria-labelledby="data-title">
+        <div class="section-kicker"><span>01</span> 数据范围</div>
+        <div class="section-title-row">
+          <div><h2 id="data-title">本机游戏库</h2><p>扫描与预览不会改动 Steam。</p></div>
+          <span id="scan-indicator" class="scan-indicator" aria-hidden="true"></span>
+        </div>
+
+        <div class="stats" id="stats" aria-label="扫描统计" aria-busy="true">
+          <article class="hero-stat">
+            <span class="tile-label" id="stat-scope-label">当前范围</span>
+            <div><strong class="tile-value" id="stat-scope">—</strong><span>项可整理</span></div>
+            <span class="tile-note" id="stat-scope-note">等待读取</span>
+          </article>
+          <div class="mini-stats">
+            <article><span>仅游戏</span><strong id="stat-games">—</strong><small id="stat-games-note">游戏条目</small></article>
+            <article><span>本机已安装</span><strong id="stat-installed">—</strong><small>所有库目录</small></article>
+            <article id="unresolved-tile"><span>待识别</span><strong id="stat-unresolved">—</strong><small id="stat-unresolved-note">资料不完整</small></article>
+          </div>
+        </div>
+
+        <fieldset class="field-group scope-fieldset">
+          <legend>整理范围</legend>
+          <div class="scope-options" id="scopes"></div>
+        </fieldset>
+
+        <div class="quality-card" id="quality-card">
+          <span class="quality-icon" aria-hidden="true">i</span>
+          <div><strong id="quality-title">正在分析数据质量</strong><p id="quality-copy">完成扫描后会说明本次覆盖范围。</p></div>
+        </div>
+        <div class="safety-copy" id="safety-copy">写入前会自动备份。</div>
+      </section>
+
+      <section class="control-section rules-section" aria-labelledby="rules-title">
+        <div class="section-kicker"><span>02</span> 分类规则</div>
+        <div class="section-title-row">
+          <div><h2 id="rules-title">选择分类维度</h2><p>同一游戏可以进入多个分类。</p></div>
+        </div>
+
+        <div class="modes" id="modes" aria-label="分类维度"></div>
+
+        <div class="language-control" aria-label="游戏名称语言">
+          <span class="control-label">游戏名称语言</span>
+          <div class="segmented">
+            <button class="seg is-on" data-lang="schinese" type="button" aria-pressed="true">简体</button>
+            <button class="seg" data-lang="tchinese" type="button" aria-pressed="false">繁体</button>
+            <button class="seg" data-lang="english" type="button" aria-pressed="false">English</button>
+          </div>
+        </div>
+
+        <div class="company-options" id="company-options" hidden>
+          <label for="developer-min">厂商独立分组门槛</label>
+          <div class="stepper">
+            <button class="step-btn" data-step="-1" type="button" aria-label="减少厂商分组门槛">−</button>
+            <input id="developer-min" type="number" min="1" max="100" value="3" inputmode="numeric" />
+            <button class="step-btn" data-step="1" type="button" aria-label="增加厂商分组门槛">+</button>
+          </div>
+        </div>
+      </section>
+
+      <p class="plan-status" id="plan-status" role="status">正在读取 Steam 数据…</p>
+    </aside>
+
+    <section class="preview-panel" id="preview-panel" aria-labelledby="preview-title">
+      <header class="preview-header">
+        <div>
+          <div class="section-kicker"><span>03</span> 安全预览</div>
+          <h2 id="preview-title">分类预览</h2>
+          <p id="preview-context">选择整理范围和分类规则，然后生成可逐项勾选的预览。</p>
+        </div>
+        <div class="preview-tools">
+          <label class="search-box" for="preview-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+            <input id="preview-search" type="search" placeholder="搜索分类或游戏" autocomplete="off" />
+          </label>
+          <button id="select-none" class="btn btn-quiet btn-compact" type="button">全不选</button>
+          <button id="select-all" class="btn btn-quiet btn-compact" type="button">全选</button>
+        </div>
+      </header>
+
+      <div class="stale-banner" id="stale-banner" role="status" hidden>设置已改变。这份预览已过期，请重新生成。</div>
+
+      <div class="preview-stats" aria-label="所选分类摘要">
+        <div><span>所选分类</span><strong id="preview-groups">—</strong></div>
+        <div><span>唯一条目</span><strong id="preview-unique">—</strong></div>
+        <div><span>总归属</span><strong id="preview-memberships">—</strong></div>
+        <div><span>资料缺失</span><strong id="preview-missing">—</strong></div>
+      </div>
+
+      <div class="preview-scroll" id="preview-scroll">
+        <div class="warning-list" id="preview-warnings" hidden aria-label="预览提醒"></div>
+
+        <div class="preview-empty" id="preview-empty">
+          <div class="empty-visual" aria-hidden="true">
+            <span class="empty-stack stack-a"></span>
+            <span class="empty-stack stack-b"></span>
+            <span class="empty-stack stack-c"></span>
+            <span class="empty-scan"></span>
+          </div>
+          <h3>先看清，再写入</h3>
+          <p>选择左侧规则并生成预览。每个收藏夹都可以单独检查和取消。</p>
+          <div class="empty-points" aria-hidden="true"><span>本地读取</span><span>逐项勾选</span><span>自动备份</span></div>
+        </div>
+
+        <div class="groups" id="groups"></div>
+
+        <section class="result-panel" id="result-panel" aria-live="polite" hidden>
+          <span class="result-mark" aria-hidden="true">✓</span>
+          <div><h2 id="result-title">操作完成</h2><p id="result-copy"></p><p class="result-path" id="result-path"></p></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <details class="diagnostics" id="diagnostics">
+    <summary>
+      <span class="activity-dot" aria-hidden="true"></span>
+      <span id="log-hint">等待操作</span>
+      <span class="diagnostic-action">查看运行记录</span>
+    </summary>
+    <div class="log" id="log" role="log" aria-live="polite" aria-relevant="additions"></div>
+  </details>
+
+  <footer class="actionbar" id="actionbar">
+    <div class="action-copy"><strong id="action-title">正在准备</strong><span id="action-hint">正在读取本机 Steam 数据</span></div>
+    <div class="action-buttons">
+      <button id="plan-btn" class="btn btn-secondary btn-large" type="button" disabled>生成分类预览</button>
+      <button id="apply-btn" class="btn btn-primary btn-large" type="button" disabled hidden>
+        <span class="btn-label">备份并写入 Steam</span><span class="btn-shine" aria-hidden="true"></span>
+      </button>
+    </div>
+  </footer>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-describedby="sheet-body sheet-note" tabindex="-1">
+    <div class="sheet-grip" id="sheet-grip" aria-hidden="true"><span></span></div>
+    <div class="sheet-heading">
+      <div><span class="section-kicker" id="sheet-kicker">确认操作</span><h2 id="sheet-title">写入 Steam 收藏夹</h2></div>
+      <button id="sheet-close" class="icon-btn" type="button" aria-label="关闭确认窗口">×</button>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+    <div class="sheet-note" id="sheet-note"></div>
+    <div class="sheet-error" id="sheet-error" role="alert" hidden></div>
+    <div class="sheet-buttons">
+      <button id="sheet-cancel" class="btn btn-quiet" type="button">返回检查</button>
+      <button id="sheet-confirm" class="btn btn-primary" type="button">确认</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
