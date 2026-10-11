@@ -1,0 +1,65 @@
+name: Windows CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PYTHONNOUSERSITE: "1"
+      PYTHONUTF8: "1"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up CPython 3.13.2 x64
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13.2"
+          architecture: x64
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+
+      - name: Verify Python runtime
+        shell: pwsh
+        run: >-
+          python -c "import platform, struct, sys;
+          assert sys.implementation.name == 'cpython';
+          assert sys.version_info[:3] == (3, 13, 2), sys.version;
+          assert struct.calcsize('P') * 8 == 64;
+          print(sys.executable, sys.version, platform.machine())"
+
+      - name: Install locked dependencies
+        shell: pwsh
+        run: >-
+          python -m pip install
+          --disable-pip-version-check
+          --only-binary=:all:
+          --no-binary=proxy_tools
+          --no-input
+          -r requirements-lock.txt
+
+      - name: Check dependency graph
+        run: python -m pip check
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Compile Python modules
+        run: >-
+          python -m py_compile
+          steam_modern.py
+          steam_desktop.py
+          steam_appinfo.py
+          steam_library_core.py
+          steam_web.py
+
+      - name: Check JavaScript syntax
+        run: node --check steam_ui\app.js

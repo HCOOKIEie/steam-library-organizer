@@ -128,6 +128,9 @@ class Organizer:
 
     def state(self, refresh_metadata: bool = False) -> dict:
         lib = self.library
+        scan_warnings = getattr(lib, "scan_warnings", None)
+        if scan_warnings is not None:
+            scan_warnings.clear()
         try:
             appinfo = lib.appinfo(refresh=refresh_metadata)
         except Exception:
@@ -155,6 +158,7 @@ class Organizer:
             "appinfo_entries": len(appinfo),
             "appinfo_error": lib.appinfo_error,
             "appinfo_stale": bool(lib.appinfo_error and appinfo),
+            "scan_warnings": list(getattr(lib, "scan_warnings", [])),
             "default_scope": "library",
             "scopes": {
                 "default": "library",
@@ -241,6 +245,9 @@ class Organizer:
         if not 1 <= developer_min <= 100:
             raise SteamError("厂商最少游戏数必须在 1 到 100 之间")
 
+        scan_warnings = getattr(self.library, "scan_warnings", None)
+        if scan_warnings is not None:
+            scan_warnings.clear()
         self.library.appinfo(refresh=True)
         if self.library.appinfo_error:
             raise SteamError(
@@ -281,6 +288,7 @@ class Organizer:
             1 for item in catalog.values() if not item.get("named") or not item.get("form")
         )
         warnings = []
+        warnings.extend(getattr(self.library, "scan_warnings", []))
         if scope == "all":
             warnings.append("“全部本地记录”会包含工具、试玩、配置项和资料缺失条目。")
         if missing_metadata:

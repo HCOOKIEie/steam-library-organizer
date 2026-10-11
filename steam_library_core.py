@@ -12,6 +12,7 @@ from contextlib import contextmanager
 import hashlib
 import html
 import json
+import logging
 import os
 import re
 import tempfile
@@ -25,6 +26,8 @@ from datetime import datetime
 from pathlib import Path
 
 import steam_appinfo
+
+LOGGER = logging.getLogger(__name__)
 
 STEAM_DEFAULT = r"D:\steam"
 ACCOUNT_BASE = 76561197960265728
@@ -428,6 +431,7 @@ class SteamLibrary:
         self._appinfo_fingerprint: tuple[str, int | None, int | None, str] | None = None
         self._appinfo_attempt_fingerprint: tuple[str, int | None, int | None, str] | None = None
         self.appinfo_error: str | None = None
+        self.scan_warnings: list[str] = []
         self.steamid64: str | None = None
         self.account_id: str | None = None
 
@@ -440,12 +444,28 @@ class SteamLibrary:
         blocks = re.findall(r'"(7656119\d{10})"\s*\{(.*?)\n\t\}', text, re.S)
         if not blocks:
             raise SteamError("loginusers.vdf 中没有找到账号记录")
-        chosen = None
+        usable = []
         for steamid, body in blocks:
-            if re.search(r'"AutoLogin"\s+"1"', body) or re.search(r'"MostRecent"\s+"1"', body):
-                chosen = steamid
-                break
-        self.steamid64 = chosen or blocks[0][0]
+            account_id = str(int(steamid) - ACCOUNT_BASE)
+            config_dir = self.root / "userdata" / account_id / "config"
+            if not config_dir.is_dir():
+                continue
+            usable.append(
+                (
+                    steamid,
+                    bool(re.search(r'"MostRecent"\s+"1"', body)),
+                    bool(re.search(r'"AutoLogin"\s+"1"', body)),
+                )
+            )
+        if not usable:
+            raise SteamError("没有找到包含本地配置的 Steam 账号")
+        self.steamid64 = next(
+            (steamid for steamid, most_recent, _auto in usable if most_recent),
+            next(
+                (steamid for steamid, _recent, auto in usable if auto),
+                usable[0][0],
+            ),
+        )
         self.account_id = str(int(self.steamid64) - ACCOUNT_BASE)
         return self.account_id
 
@@ -490,18 +510,42 @@ class SteamLibrary:
     def installed_appids(self) -> set[int]:
         found = set()
         for folder in self.library_folders():
-            for manifest in (folder / "steamapps").glob("appmanifest_*.acf"):
-                text = manifest.read_text(encoding="utf-8", errors="ignore")
+            manifest_dir = folder / "steamapps"
+            try:
+                manifests = list(manifest_dir.glob("appmanifest_*.acf"))
+            except OSError as exc:
+                self._record_scan_warning(
+                    f"无法读取 Steam 库目录 {manifest_dir}，已跳过：{exc}"
+                )
+                continue
+            for manifest in manifests:
+                try:
+                    text = manifest.read_text(encoding="utf-8", errors="ignore")
+                except OSError as exc:
+                    self._record_scan_warning(
+                        f"无法读取安装清单 {manifest.name}，已跳过：{exc}"
+                    )
+                    continue
                 appid = _read_vdf_value(text, "appid")
                 if appid and appid.isdigit():
                     found.add(int(appid))
         return found
 
+    def _record_scan_warning(self, message: str) -> None:
+        if message not in self.scan_warnings:
+            self.scan_warnings.append(message)
+
     def library_folders(self) -> list[Path]:
         folders = [self.root]
         manifest = self.root / "steamapps" / "libraryfolders.vdf"
         if manifest.exists():
-            text = manifest.read_text(encoding="utf-8", errors="ignore")
+            try:
+                text = manifest.read_text(encoding="utf-8", errors="ignore")
+            except OSError as exc:
+                self._record_scan_warning(
+                    f"无法读取 Steam 库目录列表，已只扫描主目录：{exc}"
+                )
+                return folders
             for raw in re.findall(r'"path"\s+"([^"]+)"', text):
                 candidate = Path(raw.replace("\\\\", "\\"))
                 if candidate not in folders:
@@ -640,6 +684,7 @@ class SteamLibrary:
     # --------------------------------------------------------------- catalog
     def source_appids(self, extra_appids: set[int] | None = None) -> dict[str, set[int]]:
         """Return local evidence separately instead of conflating it with ownership."""
+        self.scan_warnings.clear()
         extra: set[int] = set()
         for value in extra_appids or set():
             try:
@@ -1051,7 +1096,10 @@ class SteamLibrary:
         path = self.cloud_path()
         if not path.exists():
             raise SteamError(f"找不到 Steam 收藏夹文件：{path}")
-        original = path.read_bytes()
+        try:
+            original = path.read_bytes()
+        except OSError as exc:
+            raise SteamError(f"Steam 收藏夹文件无法读取：{exc}") from exc
         try:
             records = json.loads(original.decode("utf-8-sig"))
         except (UnicodeError, json.JSONDecodeError) as exc:
@@ -1082,7 +1130,12 @@ class SteamLibrary:
         if not prepared:
             raise SteamError("分类计划中没有可写入的条目")
 
-        backup = self._backup_bytes(original)
+        try:
+            backup = self._backup_bytes(original)
+        except OSError as exc:
+            raise SteamError(
+                f"无法创建 Steam 收藏夹备份：{exc}。请检查磁盘空间和目录权限。"
+            ) from exc
 
         records = [
             record
@@ -1130,7 +1183,7 @@ class SteamLibrary:
         ).encode("utf-8")
         try:
             self._atomic_write(path, encoded)
-        except Exception:
+        except Exception as exc:
             # The just-created backup is byte-for-byte the still-current file
             # when replacement fails, so keeping it only creates a no-op
             # restore candidate.
@@ -1138,6 +1191,10 @@ class SteamLibrary:
                 backup.unlink()
             except OSError:
                 pass
+            if isinstance(exc, OSError):
+                raise SteamError(
+                    f"无法写入 Steam 收藏夹：{exc}。请检查磁盘空间和目录权限。"
+                ) from exc
             raise
         self._prune_backups(keep_backups)
         return {
@@ -1147,12 +1204,19 @@ class SteamLibrary:
         }
 
     def _prune_backups(self, keep: int) -> None:
-        normal = self._normal_backups()
-        pre_restore = [
-            entry
-            for entry in self._tool_backups()
-            if self._backup_kind(entry) == "pre-restore"
-        ]
+        try:
+            normal = self._normal_backups()
+            pre_restore = [
+                entry
+                for entry in self._tool_backups()
+                if self._backup_kind(entry) == "pre-restore"
+            ]
+        except OSError as exc:
+            # Backup pruning is maintenance performed only after the primary
+            # write/restore has succeeded.  A locked or damaged backup folder
+            # must never turn that successful operation into a false failure.
+            LOGGER.warning("Unable to enumerate old Steam backups: %s", exc)
+            return
         keep = max(0, int(keep))
         stale_normal = normal if keep == 0 else normal[:-keep]
         # Undo snapshots have their own one-level retention and never consume
@@ -1175,7 +1239,10 @@ class SteamLibrary:
             raise SteamError("没有可用的备份")
 
         path = self.cloud_path()
-        current = path.read_bytes() if path.exists() else None
+        try:
+            current = path.read_bytes() if path.exists() else None
+        except OSError as exc:
+            raise SteamError(f"当前 Steam 收藏夹无法读取：{exc}") from exc
         current_parsed = None
         if current is not None:
             try:
@@ -1212,15 +1279,24 @@ class SteamLibrary:
 
         safety_backup = None
         if path.exists():
-            safety_backup = self._backup_bytes(current or b"", "pre-restore")
+            try:
+                safety_backup = self._backup_bytes(current or b"", "pre-restore")
+            except OSError as exc:
+                raise SteamError(
+                    f"无法创建恢复前安全备份：{exc}。请检查磁盘空间和目录权限。"
+                ) from exc
         try:
             self._atomic_write(path, restored)
-        except Exception:
+        except Exception as exc:
             if safety_backup is not None:
                 try:
                     safety_backup.unlink()
                 except OSError:
                     pass
+            if isinstance(exc, OSError):
+                raise SteamError(
+                    f"无法恢复 Steam 收藏夹：{exc}。请检查磁盘空间和目录权限。"
+                ) from exc
             raise
 
         # A consumed undo snapshot is replaced by the fresh safety snapshot,

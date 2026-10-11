@@ -1721,7 +1721,7 @@ def _show_fatal_error(message: str, root: tk.Tk | None = None) -> None:
                 pass
 
 
-def main() -> None:
+def main(organizer: Organizer | None = None) -> None:
     root: tk.Tk | None = None
     mutex = WindowsSingleInstance()
     try:
@@ -1738,7 +1738,7 @@ def main() -> None:
 
         enable_windows_dpi_awareness()
         root = tk.Tk()
-        SteamDesktopApp(root)
+        SteamDesktopApp(root, organizer=organizer)
         root.mainloop()
     except Exception as exc:
         details = traceback.format_exc()

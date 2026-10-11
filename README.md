@@ -1,30 +1,36 @@
 # Steam Library Organizer
 
-一个只读取本机 Steam 客户端数据、先生成安全预览、再备份并写入 Steam 收藏夹的 Windows 桌面工具。
+一个只读取本机 Steam 客户端数据、先生成安全预览、再备份并写入 Steam 收藏夹的 Windows 桌面工具。它是社区个人项目，与 Valve 或 Steam 官方无隶属、授权或背书关系。
 
 默认流程是：读取数据 → 选择分类规则 → 审阅并勾选预览 → 退出 Steam 后备份写入。默认启用“首字母 + 游戏类型”，也支持条目形式、开发商、发行商、安装状态、最近游玩和游玩时长。
 
 ## 下载
 
-从 [GitHub Releases](https://github.com/luyaoting114514-arch/steam-library-organizer/releases/latest) 下载最新版 `SteamLibraryOrganizer.exe`。本项目暂未购买 Windows 代码签名证书，因此首次运行时 SmartScreen 可能显示提醒；可用同一 Release 中的 SHA-256 文件核对下载内容。
+从 [GitHub Releases](https://github.com/HCOOKIEie/steam-library-organizer/releases/latest) 下载最新版。推荐下载 `SteamLibraryOrganizer-<版本>-win-x64-portable.zip`，完整解压后运行其中的 `SteamLibraryOrganizer.exe`；该压缩包已包含第三方许可。单文件 `SteamLibraryOrganizer-<版本>-win-x64.exe` 是便携备选，但启动时需要先解包到临时目录，更容易触发杀毒软件的启发式检查；选择单文件版时，请同时下载并保留同版本的 `SteamLibraryOrganizer-<版本>-third-party-licenses.zip`。正式发布包面向 **64 位 Windows 10/11**；Windows 7/8.1、32 位 Windows 与 Windows on ARM 均未列入支持范围。
 
-运行桌面版需要 Microsoft Edge WebView2 Runtime；Windows 10/11 通常已预装。
+单文件版正常退出时会自动清理临时解包目录；系统崩溃或强制结束进程时可能留下临时文件。担心系统盘空间或杀毒软件误报时，优先使用 portable ZIP，并在程序完全退出后再通过 Windows 临时文件清理功能处理残留。
+
+本项目暂未购买 Windows 代码签名证书，因此首次运行时 SmartScreen 可能显示“Windows 已保护你的电脑”。请只从本仓库 Release 下载，并用同一 Release 中的 SHA-256 文件核对内容；这项提醒不等于文件已被确认有害。
+
+完整的新界面需要 [Microsoft Edge WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)；Windows 10/11 通常已预装。WebView2 缺失或损坏时，正式 EXE 会自动切换到内置 tkinter 兼容界面；安装或修复 Evergreen Runtime 后即可恢复新界面。
 
 ## 启动
 
-双击 `启动Steam分类工具.bat`，或直接运行 `SteamLibraryOrganizer.exe`。
+下载 portable ZIP 的用户应先完整解压，不要只把 EXE 单独移出文件夹；然后运行其中的 `SteamLibraryOrganizer.exe`。仓库中的 `启动Steam分类工具.bat` 主要给源码开发环境使用；`legacy/` 是早期实现的存档，不应作为正式入口，也不要用它处理真实 Steam 数据。
 
-正式版使用 WebView2 嵌入式桌面窗口：不会打开外部浏览器，也不会启动或监听 HTTP 服务。Windows 10/11 通常已包含 WebView2 Runtime；源码模式在运行环境缺少它时可回退到旧的 tkinter 界面，单文件 EXE 则会给出明确的修复提示。
+正式版优先使用 WebView2 嵌入式桌面窗口：不会打开外部浏览器，也不会启动或监听 HTTP 服务。源码模式和正式 EXE 均包含 tkinter 兼容回退界面，因此 WebView2 启动失败时仍能完成核心操作。
 
 程序会从注册表和常见安装位置自动寻找 Steam。识别失败时，可点击窗口左上角的 Steam 路径选择正确目录；选择会保存到 `%LOCALAPPDATA%\SteamLibraryOrganizer\settings.json`。
 
 使用源码运行：
 
 ```powershell
-py -3.13 -m venv .venv
+py -3.13-64 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe steam_modern.py
 ```
+
+可复现发布构建使用 CPython 3.13.2 x64 的全新虚拟环境；精确版本见 `requirements-lock.txt`，发布流程见 `RELEASE_CHECKLIST.md`。不要从 Anaconda、系统全局 site-packages 或日常开发环境直接打包。
 
 运行日志保存在 `%LOCALAPPDATA%\SteamLibraryOrganizer\steam_modern.log`。
 
@@ -61,7 +67,9 @@ steam_appinfo.py           Steam appinfo.vdf 离线解析器
 steam_web.py               开发与回归用本地服务
 steam_ui/                  嵌入式 HTML/CSS/JavaScript 界面
 THIRD_PARTY_NOTICES.md     Uiverse 来源与第三方许可
-legacy/                    早期实现，仅供追溯
+THIRD_PARTY_LICENSES/      发布包所含第三方组件的完整许可文本
+RELEASE_CHECKLIST.md       v1.0.1 可复现构建与发布检查清单
+legacy/                    早期实现，仅供追溯，请勿用于真实数据
 ```
 
 `steam_appinfo_cache.json` 是从本机 Steam 缓存生成的加速文件；删除后会在下次扫描时重建。
@@ -74,12 +82,18 @@ python -m py_compile steam_modern.py steam_desktop.py steam_appinfo.py steam_lib
 node --check steam_ui\app.js
 ```
 
-当前版本包含 40 项标准库回归测试。发布前实机验证仅执行读取与预览，不执行真实写入。
+发布要求完整回归测试全部通过。自动测试会覆盖临时测试数据上的写入与恢复；正式发布还应在隔离的测试账号/可还原数据上完成实机冒烟测试，不要直接拿主力收藏夹做首次验证。
 
-当前公开版本：`v1.0.0`。Windows EXE 尚未进行代码签名。
+`v1.0.1` 的发布构建改用 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖，避免把 Anaconda 或开发机中的无关模块混入 EXE；支持范围仍是 Windows 10/11 x64。Windows EXE 尚未进行代码签名。
 
-打包 Windows EXE：
+构建 Windows 发布包：
 
 ```powershell
-.\.venv\Scripts\python.exe -m PyInstaller --noconfirm --clean .build\SteamLibraryOrganizer.spec
+powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.0.1 -Layout Both
 ```
+
+脚本会新建 `.venv-release`、安装 `requirements-lock.txt`、运行测试、构建推荐的 onedir ZIP 与单文件备选、复制第三方许可并生成 SHA-256。发布前仍应检查构建日志与 PyInstaller TOC，确认路径不含 Anaconda、用户级 `site-packages` 或其他工作区。完整步骤见 `RELEASE_CHECKLIST.md`。
+
+## 许可状态
+
+依赖和界面参考素材的许可见 `THIRD_PARTY_NOTICES.md` 与 `THIRD_PARTY_LICENSES/`。仓库目前尚未选择项目级 `LICENSE`，因此当前状态是 **source-available（源码公开可查看）**，并非已经采用 OSI 认可许可证的正式开源项目。在项目级许可证确定前，不应将本项目描述为已采用 MIT、Apache-2.0、GPL 等许可证。

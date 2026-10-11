@@ -1,5 +1,56 @@
 # Third-Party Notices
 
+This file lists third-party software and UI references associated with the
+Steam Library Organizer v1.0.1 Windows x64 build. Exact Python package versions
+are pinned in `requirements-lock.txt`; verbatim license texts are stored under
+`THIRD_PARTY_LICENSES/` and must be shipped with the release archive.
+
+These notices apply only to the identified third-party components. They do not
+provide a license for this project's own source code. No project-level license
+has been selected at the time of this notice; the repository is currently
+source-available, not licensed as an OSI-approved open-source project.
+
+## Bundled runtime components
+
+| Component | Version | License | Source / full text |
+| --- | ---: | --- | --- |
+| CPython | 3.13.2 x64 | PSF License Version 2 and bundled notices | [Python](https://www.python.org/) · `THIRD_PARTY_LICENSES/CPython-3.13.2.txt` |
+| pypinyin | 0.55.0 | MIT | [Source](https://github.com/mozillazg/python-pinyin) · `THIRD_PARTY_LICENSES/pypinyin-0.55.0.txt` |
+| pywebview | 6.2.1 | BSD-3-Clause | [Source](https://github.com/r0x0r/pywebview) · `THIRD_PARTY_LICENSES/pywebview-6.2.1.txt` |
+| pythonnet | 3.2.0 | MIT | [Source](https://github.com/pythonnet/pythonnet) · `THIRD_PARTY_LICENSES/pythonnet-3.2.0.txt` |
+| clr-loader | 0.3.1 | MIT | [Source](https://github.com/pythonnet/clr-loader) · `THIRD_PARTY_LICENSES/clr-loader-0.3.1.txt` |
+| cffi | 2.1.1 | MIT-0 | [Source](https://github.com/python-cffi/cffi) · `THIRD_PARTY_LICENSES/cffi-2.1.1.txt` |
+| pycparser | 3.11 | BSD-3-Clause | [Source](https://github.com/eliben/pycparser) · `THIRD_PARTY_LICENSES/pycparser-3.11.txt` |
+| proxy_tools | 0.1.0 | BSD (upstream source notice) | [Source](https://github.com/jtushman/proxy_tools) · `THIRD_PARTY_LICENSES/proxy-tools-0.1.0.txt` |
+| bottle | 0.13.4 | MIT | [Source](https://github.com/bottlepy/bottle) · `THIRD_PARTY_LICENSES/bottle-0.13.4.txt` |
+| typing_extensions | 4.16.0 | PSF-2.0 | [Source](https://github.com/python/typing_extensions) · `THIRD_PARTY_LICENSES/typing-extensions-4.16.0.txt` |
+| Microsoft.Web.WebView2 SDK files | 1.0.3856.49 | BSD-3-Clause plus notices | [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) · `THIRD_PARTY_LICENSES/Microsoft.Web.WebView2-SDK-1.0.3856.49.txt` |
+
+The SDK DLLs and loader above are bundled by pywebview. The Microsoft Edge
+WebView2 **Runtime** is not redistributed by this project and remains a
+separately installed Microsoft component. `proxy_tools` labels itself BSD in
+its source header and upstream license, despite its package metadata reporting
+MIT; this distribution retains the verbatim upstream license.
+
+## Release build toolchain
+
+The clean v1.0.1 environment also pins the following build packages. Most are
+not application runtime imports; PyInstaller's bootloader and runtime hooks are
+incorporated into the generated executable under the exception and licenses in
+the listed files.
+
+| Component | Version | Declared license | Full text |
+| --- | ---: | --- | --- |
+| PyInstaller | 6.22.2 | GPL-2.0-or-later with Bootloader Exception; runtime hooks Apache-2.0 | `THIRD_PARTY_LICENSES/PyInstaller-6.22.2.txt` |
+| pyinstaller-hooks-contrib | 2026.8 | GPL-2.0-or-later with Bootloader Exception; runtime hooks Apache-2.0 | `THIRD_PARTY_LICENSES/pyinstaller-hooks-contrib-2026.8.txt` |
+| altgraph | 0.17.5 | MIT | `THIRD_PARTY_LICENSES/altgraph-0.17.5.txt` |
+| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | `THIRD_PARTY_LICENSES/packaging-26.3.txt` |
+| pefile | 2024.8.26 | MIT | `THIRD_PARTY_LICENSES/pefile-2024.8.26.txt` |
+| pywin32-ctypes | 0.2.3 | BSD-3-Clause | `THIRD_PARTY_LICENSES/pywin32-ctypes-0.2.3.txt` |
+| setuptools | 84.0.0 | MIT and bundled notices | `THIRD_PARTY_LICENSES/setuptools-84.0.0.txt` |
+
+## Uiverse interaction references
+
 The Steam Library Organizer interface includes adapted interaction ideas from
 community components published by [Uiverse.io](https://uiverse.io/) and mirrored
 in the [Uiverse Galaxy](https://github.com/uiverse-io/galaxy) repository.
@@ -33,6 +84,9 @@ third-party JavaScript runtime is bundled.
   - https://github.com/uiverse-io/galaxy/blob/main/Patterns/kennyotsu_short-warthog-33.html
 
 ## Uiverse Galaxy license
+
+The same license is also retained as
+`THIRD_PARTY_LICENSES/Uiverse-Galaxy-MIT.txt` for release packaging.
 
 MIT License
 

@@ -5,8 +5,8 @@ HTML/CSS/JavaScript interface inside a native Windows WebView2 window.  Static
 assets are inlined and passed to pywebview as HTML, so the production desktop
 entry point does not start an HTTP server or open the user's browser.
 
-If pywebview or WebView2 cannot start, the previous tkinter desktop interface
-is launched as a compatibility fallback.
+If pywebview or WebView2 cannot start, the bundled tkinter desktop interface
+is launched as an offline compatibility fallback.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 import traceback
 from logging.handlers import RotatingFileHandler
@@ -30,19 +31,43 @@ from steam_web import Organizer
 
 
 APP_TITLE = "Steam 游戏库整理"
+APP_VERSION = "1.0.1"
 MUTEX_NAME = r"Local\SteamLibraryOrganizer.Desktop.v1"
 LOGGER = logging.getLogger("steam_library_organizer.modern")
 T = TypeVar("T")
+_APP_DATA_DIRECTORY: Path | None = None
 
 
 def _app_data_dir() -> Path:
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if local_app_data:
-        folder = Path(local_app_data) / "SteamLibraryOrganizer"
-    else:
-        folder = Path.home() / "AppData" / "Local" / "SteamLibraryOrganizer"
-    folder.mkdir(parents=True, exist_ok=True)
-    return folder
+    """Return a writable per-user folder, falling back to the temp volume."""
+
+    global _APP_DATA_DIRECTORY
+    if _APP_DATA_DIRECTORY is not None:
+        return _APP_DATA_DIRECTORY
+
+    bases: list[Path] = []
+    for value in (
+        os.environ.get("LOCALAPPDATA"),
+        tempfile.gettempdir(),
+        str(Path.home() / "AppData" / "Local"),
+    ):
+        if value:
+            candidate = Path(value)
+            if candidate not in bases:
+                bases.append(candidate)
+
+    failures: list[str] = []
+    for base in bases:
+        folder = base / "SteamLibraryOrganizer"
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(dir=folder, prefix=".write-test-", delete=True):
+                pass
+            _APP_DATA_DIRECTORY = folder
+            return folder
+        except OSError as exc:
+            failures.append(f"{folder}: {exc}")
+    raise OSError("没有可写的应用数据目录：" + "; ".join(failures))
 
 
 def configure_logging() -> Path:
@@ -62,6 +87,12 @@ def configure_logging() -> Path:
             logging.Formatter("%(asctime)s %(levelname)s [%(threadName)s] %(message)s")
         )
         LOGGER.addHandler(handler)
+    handler = LOGGER.handlers[0]
+    webview_logger = logging.getLogger("pywebview")
+    webview_logger.setLevel(logging.INFO)
+    webview_logger.propagate = False
+    if handler not in webview_logger.handlers:
+        webview_logger.addHandler(handler)
     LOGGER.info("%s 启动（WebView2 桌面版）", APP_TITLE)
     return log_path
 
@@ -122,6 +153,44 @@ def _show_native_error(title: str, message: str) -> None:
         print(f"{title}: {message}", file=sys.stderr)
     except Exception:
         pass
+
+
+def _dialog_start_directory(preferred: Path) -> Path:
+    """Return an existing folder suitable for a native folder picker."""
+
+    candidates = [preferred, preferred.parent]
+    for variable in ("ProgramFiles(x86)", "ProgramFiles", "USERPROFILE"):
+        value = os.environ.get(variable)
+        if value:
+            candidates.append(Path(value))
+    candidates.extend((Path.home(), Path.cwd()))
+    for candidate in candidates:
+        try:
+            if candidate.is_dir():
+                return candidate
+        except OSError:
+            continue
+    return Path.cwd()
+
+
+def _webview2_runtime_version() -> str:
+    """Fail fast when the Evergreen WebView2 Runtime is unavailable."""
+
+    if os.name != "nt":
+        raise RuntimeError("WebView2 桌面界面仅支持 Windows")
+    try:
+        import clr
+        from webview.util import interop_dll_path
+
+        clr.AddReference(interop_dll_path("Microsoft.Web.WebView2.Core.dll"))
+        from Microsoft.Web.WebView2.Core import CoreWebView2Environment
+
+        version = str(CoreWebView2Environment.GetAvailableBrowserVersionString() or "").strip()
+    except Exception as exc:
+        raise RuntimeError("未检测到可用的 Microsoft Edge WebView2 Runtime") from exc
+    if not version:
+        raise RuntimeError("未检测到可用的 Microsoft Edge WebView2 Runtime")
+    return version
 
 
 def _enable_dpi_awareness() -> None:
@@ -444,7 +513,7 @@ class DesktopApi:
             import webview
 
             current = Path(self._organizer.library.root)
-            initial = current if current.is_dir() else current.parent
+            initial = _dialog_start_directory(current)
             selected = self._window.create_file_dialog(
                 webview.FOLDER_DIALOG,
                 directory=str(initial),
@@ -505,6 +574,8 @@ def _darken_native_title_bar(window: Any) -> None:
 def _run_webview(log_path: Path) -> None:
     import webview
 
+    webview2_version = _webview2_runtime_version()
+    LOGGER.info("检测到 WebView2 Runtime %s", webview2_version)
     organizer = _create_organizer()
     api = DesktopApi(organizer, log_path)
     html = load_ui_html()
@@ -554,37 +625,33 @@ def _run_webview(log_path: Path) -> None:
     webview.start(
         gui="edgechromium",
         debug=False,
-        private_mode=True,
+        private_mode=False,
         storage_path=str(storage_path),
     )
 
 
 def _run_tk_fallback(reason: BaseException) -> None:
-    if getattr(sys, "frozen", False):
-        LOGGER.error("打包版 WebView2 无法启动：%s", reason, exc_info=True)
-        raise RuntimeError(
-            "内嵌界面无法启动。请安装或修复 Microsoft Edge WebView2 Runtime 后重试。"
-            f"\n\n原始错误：{reason}"
-        ) from reason
     LOGGER.error(
-        "WebView2 桌面版无法启动，改用 tkinter 回退界面：%s",
+        "WebView2 桌面版无法启动，改用内置 tkinter 回退界面：%s",
         reason,
         exc_info=True,
     )
-    # Keep the source-only compatibility UI out of the one-file release. This
-    # avoids extracting the entire Tcl/Tk runtime before the modern UI starts.
     tkinter_main = importlib.import_module("steam_desktop").main
-    tkinter_main()
+    tkinter_main(organizer=_create_organizer())
 
 
 def main() -> None:
     mutex = WindowsSingleInstance()
     mutex_owned = False
+    log_path: Path | None = None
     try:
         try:
             log_path = configure_logging()
         except Exception:
-            log_path = _app_data_dir() / "steam_modern.log"
+            try:
+                log_path = _app_data_dir() / "steam_modern.log"
+            except Exception:
+                log_path = Path(tempfile.gettempdir()) / "SteamLibraryOrganizer.log"
 
         if not mutex.acquire():
             _show_native_error(
@@ -612,7 +679,7 @@ def main() -> None:
             pass
         _show_native_error(
             f"{APP_TITLE}无法启动",
-            f"{exc}\n\n详细日志：{_app_data_dir() / 'steam_modern.log'}",
+            f"{exc}\n\n详细日志：{log_path}" if log_path else str(exc),
         )
     finally:
         if mutex_owned:

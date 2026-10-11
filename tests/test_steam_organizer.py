@@ -11,8 +11,10 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import steam_appinfo
 from steam_appinfo import AppInfoError, _summarise
 from steam_library_core import (
+    ACCOUNT_BASE,
     SteamError,
     SteamLibrary,
     detect_steam_root,
@@ -35,7 +37,8 @@ def make_steam_root(base: Path, steamid: str = "76561198000000001") -> Path:
     (root / "config").mkdir(parents=True)
     (root / "appcache").mkdir()
     (root / "steamapps").mkdir()
-    (root / "userdata").mkdir()
+    account_id = str(int(steamid) - ACCOUNT_BASE)
+    (root / "userdata" / account_id / "config").mkdir(parents=True)
     (root / "steam.exe").write_bytes(b"")
     (root / "appcache" / "appinfo.vdf").write_bytes(b"appinfo")
     (root / "config" / "loginusers.vdf").write_text(
@@ -61,6 +64,38 @@ class SteamRootTests(unittest.TestCase):
         with self.assertRaisesRegex(SteamError, r"appcache[\\/]appinfo\.vdf"):
             validate_steam_root(root)
 
+    def test_unicode_and_space_paths_support_root_and_appinfo_cache(self):
+        root = make_steam_root(self.base / "中文 Steam 安装 目录")
+        self.assertEqual(validate_steam_root(root), root.resolve())
+
+        library = SteamLibrary(root)
+        expected_account = str(76561198000000001 - ACCOUNT_BASE)
+        self.assertEqual(library.resolve_account(), expected_account)
+        self.assertEqual(
+            library.config_dir,
+            root / "userdata" / expected_account / "config",
+        )
+
+        cache_path = self.base / "中文 缓存 目录" / "应用 元数据.json"
+        cache_path.parent.mkdir()
+        expected_apps = {
+            10: {
+                "appid": 10,
+                "name": "测试 游戏",
+                "type": "game",
+            }
+        }
+        with mock.patch(
+            "steam_appinfo.load_apps", return_value=expected_apps
+        ) as parser:
+            first = steam_appinfo.load_cached(root, cache_path=cache_path)
+            second = steam_appinfo.load_cached(root, cache_path=cache_path)
+
+        self.assertEqual(first, expected_apps)
+        self.assertEqual(second, expected_apps)
+        self.assertEqual(parser.call_count, 1)
+        self.assertIn("10", json.loads(cache_path.read_text(encoding="utf-8"))["apps"])
+
     def test_detection_prefers_valid_registry_candidate(self):
         invalid = self.base / "invalid-registry"
         invalid.mkdir()
@@ -74,6 +109,47 @@ class SteamRootTests(unittest.TestCase):
             return_value=[common],
         ):
             self.assertEqual(detect_steam_root(), registry.resolve())
+
+    def test_account_resolution_prefers_most_recent_over_autologin(self):
+        root = make_steam_root(self.base / "multi-account")
+        auto = "76561198000000001"
+        recent = "76561198000000002"
+        for steamid in (auto, recent):
+            account_id = str(int(steamid) - ACCOUNT_BASE)
+            (root / "userdata" / account_id / "config").mkdir(
+                parents=True, exist_ok=True
+            )
+        (root / "config" / "loginusers.vdf").write_text(
+            '"users"\n{\n'
+            f'\t"{auto}"\n\t{{\n\t\t"AutoLogin"\t\t"1"\n\t}}\n'
+            f'\t"{recent}"\n\t{{\n\t\t"MostRecent"\t\t"1"\n\t}}\n'
+            '}\n',
+            encoding="utf-8",
+        )
+        library = SteamLibrary(root)
+        self.assertEqual(library.resolve_account(), str(int(recent) - ACCOUNT_BASE))
+        self.assertEqual(library.steamid64, recent)
+
+    def test_account_resolution_skips_missing_userdata(self):
+        missing_recent = "76561198000000001"
+        valid_auto = "76561198000000002"
+        root = make_steam_root(self.base / "missing-userdata", steamid=valid_auto)
+        valid_account = str(int(valid_auto) - ACCOUNT_BASE)
+        (root / "config" / "loginusers.vdf").write_text(
+            '"users"\n{\n'
+            f'\t"{missing_recent}"\n\t{{\n\t\t"MostRecent"\t\t"1"\n\t}}\n'
+            f'\t"{valid_auto}"\n\t{{\n\t\t"AutoLogin"\t\t"1"\n\t}}\n'
+            '}\n',
+            encoding="utf-8",
+        )
+        self.assertEqual(SteamLibrary(root).resolve_account(), valid_account)
+
+    def test_account_resolution_requires_local_config(self):
+        root = make_steam_root(self.base / "no-account-config")
+        account_id = str(76561198000000001 - ACCOUNT_BASE)
+        (root / "userdata" / account_id / "config").rmdir()
+        with self.assertRaisesRegex(SteamError, "本地配置"):
+            SteamLibrary(root).resolve_account()
 
     def test_detection_uses_common_and_legacy_fallback_candidates(self):
         invalid = self.base / "invalid-common"
@@ -410,6 +486,24 @@ class CloudWriteTests(unittest.TestCase):
         ]
         self.assertEqual(remaining_undo, undo[-1:])
 
+    def test_apply_succeeds_when_old_backup_enumeration_is_denied(self):
+        self.cloud.write_text("[]", encoding="utf-8")
+        groups = [
+            {"id": "state:installed", "name": "状态 · 已安装", "appids": [1]}
+        ]
+
+        with mock.patch.object(
+            self.library,
+            "_normal_backups",
+            side_effect=PermissionError("backup folder is locked"),
+        ):
+            result = self.library.apply_groups(groups)
+
+        self.assertEqual(result["collections"], 1)
+        written = json.loads(self.cloud.read_text(encoding="utf-8"))
+        self.assertEqual(len(written), 1)
+        self.assertIn("状态 · 已安装", written[0][1]["value"])
+
     def test_restore_skips_invalid_and_noop_candidates(self):
         current = [["current", {"value": "now"}]]
         different = [["older", {"value": "then"}]]
@@ -436,7 +530,7 @@ class CloudWriteTests(unittest.TestCase):
             "_atomic_write",
             side_effect=OSError("replace failed"),
         ):
-            with self.assertRaises(OSError):
+            with self.assertRaisesRegex(SteamError, "磁盘空间和目录权限"):
                 self.library.apply_groups(group)
         self.assertEqual(self.library._normal_backups(), [])
 
@@ -453,7 +547,7 @@ class CloudWriteTests(unittest.TestCase):
             "_atomic_write",
             side_effect=OSError("replace failed"),
         ):
-            with self.assertRaises(OSError):
+            with self.assertRaisesRegex(SteamError, "磁盘空间和目录权限"):
                 self.library.restore_latest()
         self.assertEqual(
             list(self.cloud.parent.glob(self.cloud.name + ".pre-restore.*.bak")),
@@ -856,6 +950,100 @@ class ProcessCheckTests(unittest.TestCase):
             runner.call_args.kwargs["creationflags"],
             getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000),
         )
+
+
+class PartialLibraryTests(unittest.TestCase):
+    def test_inaccessible_library_is_skipped_with_warning(self):
+        with tempfile.TemporaryDirectory() as folder:
+            library = SteamLibrary(Path(folder))
+            with mock.patch(
+                "steam_library_core.Path.glob",
+                side_effect=PermissionError("access denied"),
+            ):
+                self.assertEqual(library.installed_appids(), set())
+            self.assertTrue(library.scan_warnings)
+            self.assertIn("已跳过", library.scan_warnings[0])
+
+
+class DesktopCompatibilityTests(unittest.TestCase):
+    def test_dialog_start_directory_falls_back_to_existing_parent(self):
+        from steam_modern import _dialog_start_directory
+
+        with tempfile.TemporaryDirectory() as folder:
+            parent = Path(folder)
+            self.assertEqual(
+                _dialog_start_directory(parent / "missing-steam"),
+                parent,
+            )
+
+    def test_webview_failure_uses_bundled_tkinter_fallback(self):
+        from steam_modern import _run_tk_fallback
+
+        fallback = mock.Mock()
+        module = mock.Mock(main=fallback)
+        organizer = mock.Mock()
+        # Patch importlib last: mock.patch itself uses importlib to resolve
+        # string targets, so replacing it first would redirect later patches
+        # to the fake fallback module.
+        with mock.patch(
+            "steam_modern._create_organizer", return_value=organizer
+        ), mock.patch("steam_modern.LOGGER.error"), mock.patch(
+            "steam_modern.importlib.import_module", return_value=module
+        ):
+            _run_tk_fallback(RuntimeError("WebView2 unavailable"))
+        fallback.assert_called_once_with(organizer=organizer)
+
+    def test_webview_preflight_failure_enters_main_tkinter_fallback(self):
+        import steam_modern
+
+        reason = RuntimeError("WebView2 runtime missing")
+        mutex = mock.Mock()
+        mutex.acquire.return_value = True
+        fake_webview = mock.Mock()
+
+        with mock.patch.dict(sys.modules, {"webview": fake_webview}), mock.patch.object(
+            steam_modern, "WindowsSingleInstance", return_value=mutex
+        ), mock.patch.object(
+            steam_modern,
+            "configure_logging",
+            return_value=Path("compatibility-test.log"),
+        ), mock.patch.object(
+            steam_modern, "_enable_dpi_awareness"
+        ), mock.patch.object(
+            steam_modern, "_webview2_runtime_version", side_effect=reason
+        ) as preflight, mock.patch.object(
+            steam_modern, "_run_tk_fallback"
+        ) as fallback, mock.patch.object(
+            steam_modern, "_show_native_error"
+        ) as native_error:
+            steam_modern.main()
+
+        preflight.assert_called_once_with()
+        fallback.assert_called_once_with(reason)
+        fake_webview.create_window.assert_not_called()
+        native_error.assert_not_called()
+        mutex.close.assert_called_once_with()
+
+    def test_app_data_uses_temp_when_local_appdata_is_not_writable(self):
+        import steam_modern
+
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder)
+            blocked = base / "blocked"
+            blocked.write_text("not a directory", encoding="utf-8")
+            temp_base = base / "fallback-temp"
+            temp_base.mkdir()
+            with mock.patch.dict(
+                "steam_modern.os.environ",
+                {"LOCALAPPDATA": str(blocked)},
+                clear=False,
+            ), mock.patch(
+                "steam_modern.tempfile.gettempdir", return_value=str(temp_base)
+            ), mock.patch.object(steam_modern, "_APP_DATA_DIRECTORY", None):
+                self.assertEqual(
+                    steam_modern._app_data_dir(),
+                    temp_base / "SteamLibraryOrganizer",
+                )
 
 
 if __name__ == "__main__":

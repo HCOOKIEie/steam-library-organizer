@@ -464,6 +464,9 @@ function renderScanCounts() {
   $('stat-installed').textContent = formatNumber(installed);
 
   const metadataError = state.server.appinfo_error;
+  const scanWarnings = Array.isArray(state.server.scan_warnings)
+    ? state.server.scan_warnings.filter(Boolean)
+    : [];
   $('quality-title').textContent = metadataError
     ? 'Steam 元数据刷新失败，请重新扫描'
     : (unresolved
@@ -477,9 +480,13 @@ function renderScanCounts() {
     sources ? `来源：${sources}。` : '',
     unresolved ? (state.scope === 'all' ? '“全部条目”会纳入资料不完整项。' : '资料不完整项已从当前推荐范围排除。') : '',
     auxiliary ? `另检测到 ${formatNumber(auxiliary)} 个 DLC、工具或辅助条目。` : '',
+    scanWarnings.join(' '),
     '范围之间可能重叠，数字不能简单相加。',
   ].filter(Boolean).join(' ');
-  $('quality-card').classList.toggle('is-warning', unresolved > 0 || Boolean(metadataError));
+  $('quality-card').classList.toggle(
+    'is-warning',
+    unresolved > 0 || Boolean(metadataError) || scanWarnings.length > 0,
+  );
 
   const collections = Array.isArray(state.server.collections) ? state.server.collections : [];
   const managed = collections.filter((collection) => collection.ours).length;

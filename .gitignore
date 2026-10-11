@@ -1,10 +1,12 @@
 __pycache__/
 *.py[cod]
 .venv/
+.venv-release/
 venv/
 build/
 dist/
 .pytest_cache/
+.test-tmp/
 .coverage
 .env
 .env.*
@@ -20,3 +22,5 @@ steam_categories_preview.json
 .build/*
 !.build/SteamLibraryOrganizer.spec
 /videos/
+/release/
+/promotion/
