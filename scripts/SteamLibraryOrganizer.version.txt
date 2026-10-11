@@ -17,12 +17,12 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'HCOOKIEie'),
           StringStruct('FileDescription', 'Steam Library Organizer'),
-          StringStruct('FileVersion', '1.0.1.0'),
+          StringStruct('FileVersion', '1.0.2.0'),
           StringStruct('InternalName', 'SteamLibraryOrganizer'),
           StringStruct('LegalCopyright', 'Copyright (C) 2026 HCOOKIEie'),
           StringStruct('OriginalFilename', 'SteamLibraryOrganizer.exe'),
           StringStruct('ProductName', 'Steam Library Organizer'),
-          StringStruct('ProductVersion', '1.0.1.0'),
+          StringStruct('ProductVersion', '1.0.2.0'),
         ],
       )
     ]),

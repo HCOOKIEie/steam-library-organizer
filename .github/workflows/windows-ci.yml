@@ -57,9 +57,50 @@ jobs:
           python -m py_compile
           steam_modern.py
           steam_desktop.py
+          steam_settings.py
           steam_appinfo.py
           steam_library_core.py
           steam_web.py
 
       - name: Check JavaScript syntax
         run: node --check steam_ui\app.js
+
+      - name: Build frozen one-directory smoke package
+        shell: pwsh
+        env:
+          SLO_BUILD_MODE: onedir
+          SLO_VERSION_FILE: scripts\SteamLibraryOrganizer.version.txt
+        run: >-
+          python -I -m PyInstaller
+          --noconfirm
+          --clean
+          --distpath .ci-dist
+          --workpath .ci-build
+          .build\SteamLibraryOrganizer.spec
+
+      - name: Verify frozen runtime resources
+        shell: pwsh
+        run: |
+          $bundle = Join-Path $PWD '.ci-dist\SteamLibraryOrganizer'
+          $required = @(
+            'SteamLibraryOrganizer.exe',
+            '_internal\python313.dll',
+            '_internal\VCRUNTIME140.dll',
+            '_internal\_tkinter.pyd',
+            '_internal\steam_ui\index.html',
+            '_internal\steam_ui\styles.css',
+            '_internal\steam_ui\theme-bootstrap.js',
+            '_internal\steam_ui\app.js',
+            '_internal\webview\lib\Microsoft.Web.WebView2.Core.dll',
+            '_internal\webview\lib\Microsoft.Web.WebView2.WinForms.dll',
+            '_internal\webview\lib\runtimes\win-arm64\native\WebView2Loader.dll',
+            '_internal\webview\lib\runtimes\win-x64\native\WebView2Loader.dll',
+            '_internal\webview\lib\runtimes\win-x86\native\WebView2Loader.dll'
+          )
+          $missing = @($required | Where-Object {
+            -not (Test-Path -LiteralPath (Join-Path $bundle $_) -PathType Leaf)
+          })
+          if ($missing.Count -gt 0) {
+            throw "Frozen package is missing required runtime files: $($missing -join ', ')"
+          }
+          Write-Host "Verified $($required.Count) frozen runtime files."

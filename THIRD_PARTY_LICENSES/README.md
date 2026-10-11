@@ -1,6 +1,6 @@
 # Third-Party License Files
 
-This directory contains the license texts associated with the dependencies and referenced UI components used for the v1.0.1 Windows x64 build. Exact Python package versions are pinned in `../requirements-lock.txt`.
+This directory contains the license texts associated with the dependencies and referenced UI components used for the v1.0.2 Windows x64 build. Exact Python package versions are pinned in `../requirements-lock.txt`.
 
 ## Bundled runtime components
 

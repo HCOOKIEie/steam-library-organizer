@@ -20,9 +20,10 @@ import tkinter.font as tkfont
 from collections import OrderedDict
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 from typing import Any, Callable
 
+from steam_settings import app_data_dir, load_saved_steam_root, save_steam_root
 from steam_web import Organizer
 
 
@@ -85,13 +86,7 @@ SCOPE_DEFS = OrderedDict(
 def configure_logging() -> Path:
     """Append diagnostics to LocalAppData and rotate bounded history."""
 
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if local_app_data:
-        folder = Path(local_app_data) / "SteamLibraryOrganizer"
-    else:
-        folder = Path.home() / "AppData" / "Local" / "SteamLibraryOrganizer"
-    folder.mkdir(parents=True, exist_ok=True)
-    log_path = folder / "steam_desktop.log"
+    log_path = app_data_dir() / "steam_desktop.log"
 
     LOGGER.setLevel(logging.INFO)
     LOGGER.propagate = False
@@ -108,6 +103,22 @@ def configure_logging() -> Path:
         LOGGER.addHandler(handler)
     LOGGER.info("%s 启动", APP_TITLE)
     return log_path
+
+
+def _create_organizer() -> Organizer:
+    """Create an organizer using the same saved root as the WebView2 shell."""
+
+    saved_root = load_saved_steam_root(LOGGER)
+    if saved_root:
+        try:
+            return Organizer(saved_root)
+        except Exception:
+            LOGGER.warning(
+                "已保存的 Steam 目录不再可用，将重新自动检测：%s",
+                saved_root,
+                exc_info=True,
+            )
+    return Organizer()
 
 
 class WindowsSingleInstance:
@@ -256,7 +267,7 @@ class SteamDesktopApp:
 
     def __init__(self, root: tk.Tk, organizer: Organizer | None = None) -> None:
         self.root = root
-        self.organizer = organizer or Organizer()
+        self.organizer = organizer or _create_organizer()
         self._closed = False
         self._result_queue: queue.Queue[tuple[Any, ...]] = queue.Queue()
         self._work_queue: queue.Queue[Any] = queue.Queue()
@@ -535,6 +546,12 @@ class SteamDesktopApp:
             font=(self.font_family, 9, "bold"),
         )
         self.steam_pill.pack(side="left", padx=(0, 8))
+        self.choose_root_button = ttk.Button(
+            actions,
+            text="选择 Steam 目录",
+            command=self.choose_steam_root,
+        )
+        self.choose_root_button.pack(side="left", padx=(0, 8))
         self.reveal_button = ttk.Button(actions, text="打开配置目录", command=self.open_config_folder)
         self.reveal_button.pack(side="left", padx=(0, 8))
         self.scan_button = ttk.Button(actions, text="重新扫描", command=lambda: self.scan(refresh_metadata=True))
@@ -1618,6 +1635,58 @@ class SteamDesktopApp:
         self._log(f"已打开配置目录：{folder}", "good")
         self.status_var.set("配置目录已打开")
 
+    def choose_steam_root(self) -> None:
+        """Let fallback users recover when automatic Steam detection fails."""
+
+        if self.busy_task:
+            self._notice("请等待当前操作完成。", "warning")
+            return
+
+        current = Path(self.organizer.library.root)
+        candidates = (current, current.parent, Path.home(), Path.cwd())
+        initial = Path.cwd()
+        for candidate in candidates:
+            try:
+                if candidate.is_dir():
+                    initial = candidate
+                    break
+            except OSError:
+                continue
+        chosen = filedialog.askdirectory(
+            parent=self.root,
+            title="选择 Steam 安装目录",
+            initialdir=str(initial),
+            mustexist=True,
+        )
+        if not chosen:
+            return
+
+        def work() -> tuple[str, dict[str, Any]]:
+            with self.organizer.lock:
+                root = self.organizer.set_steam_root(chosen)
+                state = self.organizer.state(refresh_metadata=True)
+            save_steam_root(root)
+            return str(root), state
+
+        def on_success(payload: tuple[str, dict[str, Any]]) -> None:
+            root, state = payload
+            self._apply_state(state)
+            self._invalidate_plan("Steam 安装目录已变化，请重新生成预览。")
+            total = as_int((state.get("scopes") or {}).get("library"), 0)
+            self._notice(
+                f"Steam 目录已更新：游戏库范围内有 {format_number(total)} 个条目。",
+                "good",
+            )
+            self._log(f"Steam 目录已切换为 {root}", "good")
+            self.status_var.set("Steam 目录已更新，可以选择分类方式并生成预览")
+
+        self._run_task(
+            "choose_root",
+            "正在验证并读取所选 Steam 目录…",
+            work,
+            on_success,
+        )
+
     # -------------------------------------------------------------- controls
     @staticmethod
     def _set_enabled(widget: ttk.Widget, enabled: bool) -> None:
@@ -1633,6 +1702,7 @@ class SteamDesktopApp:
         metadata_ready = has_state and not self.state_data.get("appinfo_error")
         company_enabled = self.mode_vars["developer"].get() or self.mode_vars["publisher"].get()
 
+        self._set_enabled(self.choose_root_button, idle)
         self._set_enabled(self.scan_button, idle)
         self._set_enabled(self.reveal_button, idle and has_state)
         self._set_enabled(self.plan_button, idle and metadata_ready and has_modes)

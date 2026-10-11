@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import ctypes
 import importlib
-import json
 import logging
 import os
 import re
@@ -27,47 +26,26 @@ from pathlib import Path
 from typing import Any, Callable, TypeVar
 
 from steam_library_core import SteamError
+from steam_settings import (
+    app_data_dir as _shared_app_data_dir,
+    load_saved_steam_root as _shared_load_saved_steam_root,
+    save_steam_root as _shared_save_steam_root,
+    settings_path as _shared_settings_path,
+)
 from steam_web import Organizer
 
 
 APP_TITLE = "Steam 游戏库整理"
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 MUTEX_NAME = r"Local\SteamLibraryOrganizer.Desktop.v1"
 LOGGER = logging.getLogger("steam_library_organizer.modern")
 T = TypeVar("T")
-_APP_DATA_DIRECTORY: Path | None = None
 
 
 def _app_data_dir() -> Path:
-    """Return a writable per-user folder, falling back to the temp volume."""
+    """Compatibility wrapper for the shared writable per-user folder."""
 
-    global _APP_DATA_DIRECTORY
-    if _APP_DATA_DIRECTORY is not None:
-        return _APP_DATA_DIRECTORY
-
-    bases: list[Path] = []
-    for value in (
-        os.environ.get("LOCALAPPDATA"),
-        tempfile.gettempdir(),
-        str(Path.home() / "AppData" / "Local"),
-    ):
-        if value:
-            candidate = Path(value)
-            if candidate not in bases:
-                bases.append(candidate)
-
-    failures: list[str] = []
-    for base in bases:
-        folder = base / "SteamLibraryOrganizer"
-        try:
-            folder.mkdir(parents=True, exist_ok=True)
-            with tempfile.NamedTemporaryFile(dir=folder, prefix=".write-test-", delete=True):
-                pass
-            _APP_DATA_DIRECTORY = folder
-            return folder
-        except OSError as exc:
-            failures.append(f"{folder}: {exc}")
-    raise OSError("没有可写的应用数据目录：" + "; ".join(failures))
+    return _shared_app_data_dir()
 
 
 def configure_logging() -> Path:
@@ -347,32 +325,15 @@ def load_ui_html() -> str:
 
 
 def _settings_path() -> Path:
-    return _app_data_dir() / "settings.json"
+    return _shared_settings_path()
 
 
 def _load_saved_steam_root() -> str | None:
-    path = _settings_path()
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        return None
-    except (OSError, UnicodeError, json.JSONDecodeError):
-        LOGGER.warning("无法读取设置文件：%s", path, exc_info=True)
-        return None
-    root = payload.get("steam_root") if isinstance(payload, dict) else None
-    return root.strip() if isinstance(root, str) and root.strip() else None
+    return _shared_load_saved_steam_root(LOGGER)
 
 
 def _save_steam_root(root: str | Path) -> None:
-    path = _settings_path()
-    temporary = path.with_suffix(".json.tmp")
-    payload = json.dumps(
-        {"steam_root": str(Path(root).resolve(strict=False))},
-        ensure_ascii=False,
-        indent=2,
-    )
-    temporary.write_text(payload + "\n", encoding="utf-8")
-    os.replace(temporary, path)
+    _shared_save_steam_root(root)
 
 
 def _create_organizer() -> Organizer:

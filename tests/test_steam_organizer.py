@@ -966,6 +966,22 @@ class PartialLibraryTests(unittest.TestCase):
 
 
 class DesktopCompatibilityTests(unittest.TestCase):
+    @staticmethod
+    def _fallback_app(organizer):
+        from steam_desktop import SteamDesktopApp
+
+        app = object.__new__(SteamDesktopApp)
+        app.root = mock.Mock()
+        app.organizer = organizer
+        app.busy_task = None
+        app.state_data = {"marker": "unchanged"}
+        app._notice = mock.Mock()
+        app._log = mock.Mock()
+        app._apply_state = mock.Mock()
+        app._invalidate_plan = mock.Mock()
+        app.status_var = mock.Mock()
+        return app
+
     def test_dialog_start_directory_falls_back_to_existing_parent(self):
         from steam_modern import _dialog_start_directory
 
@@ -1026,6 +1042,7 @@ class DesktopCompatibilityTests(unittest.TestCase):
 
     def test_app_data_uses_temp_when_local_appdata_is_not_writable(self):
         import steam_modern
+        import steam_settings
 
         with tempfile.TemporaryDirectory() as folder:
             base = Path(folder)
@@ -1034,16 +1051,143 @@ class DesktopCompatibilityTests(unittest.TestCase):
             temp_base = base / "fallback-temp"
             temp_base.mkdir()
             with mock.patch.dict(
-                "steam_modern.os.environ",
+                "steam_settings.os.environ",
                 {"LOCALAPPDATA": str(blocked)},
                 clear=False,
             ), mock.patch(
-                "steam_modern.tempfile.gettempdir", return_value=str(temp_base)
-            ), mock.patch.object(steam_modern, "_APP_DATA_DIRECTORY", None):
+                "steam_settings.tempfile.gettempdir", return_value=str(temp_base)
+            ), mock.patch.object(steam_settings, "_APP_DATA_DIRECTORY", None):
                 self.assertEqual(
                     steam_modern._app_data_dir(),
                     temp_base / "SteamLibraryOrganizer",
                 )
+
+    def test_shared_settings_round_trip_unicode_steam_root(self):
+        import steam_settings
+
+        with tempfile.TemporaryDirectory() as folder:
+            settings_dir = Path(folder)
+            steam_root = settings_dir / "中文 Steam 安装 目录"
+            with mock.patch.object(
+                steam_settings,
+                "_APP_DATA_DIRECTORY",
+                settings_dir,
+            ):
+                steam_settings.save_steam_root(steam_root)
+                self.assertEqual(
+                    steam_settings.load_saved_steam_root(),
+                    str(steam_root.resolve(strict=False)),
+                )
+                payload = json.loads(
+                    steam_settings.settings_path().read_text(encoding="utf-8")
+                )
+                self.assertEqual(
+                    payload["steam_root"],
+                    str(steam_root.resolve(strict=False)),
+                )
+
+    def test_fallback_factory_reuses_shared_saved_root(self):
+        import steam_desktop
+
+        organizer = mock.Mock()
+        saved = r"E:\Steam 自定义目录"
+        with mock.patch.object(
+            steam_desktop,
+            "load_saved_steam_root",
+            return_value=saved,
+        ), mock.patch.object(
+            steam_desktop,
+            "Organizer",
+            return_value=organizer,
+        ) as organizer_type:
+            self.assertIs(steam_desktop._create_organizer(), organizer)
+
+        organizer_type.assert_called_once_with(saved)
+
+    def test_fallback_directory_choice_switches_scans_and_persists(self):
+        from steam_desktop import filedialog
+
+        with tempfile.TemporaryDirectory() as folder:
+            current = Path(folder)
+            chosen = current / "新的 Steam 目录"
+            organizer = mock.Mock()
+            organizer.library.root = current
+            organizer.lock = mock.MagicMock()
+            organizer.set_steam_root.return_value = chosen
+            state = {"steam_root": str(chosen), "scopes": {"library": 12}}
+            organizer.state.return_value = state
+            app = self._fallback_app(organizer)
+
+            def run_now(_name, _label, work, on_success, **_kwargs):
+                on_success(work())
+                return True
+
+            app._run_task = mock.Mock(side_effect=run_now)
+            with mock.patch.object(
+                filedialog,
+                "askdirectory",
+                return_value=str(chosen),
+            ) as chooser, mock.patch(
+                "steam_desktop.save_steam_root"
+            ) as persist:
+                app.choose_steam_root()
+
+            chooser.assert_called_once()
+            organizer.set_steam_root.assert_called_once_with(str(chosen))
+            organizer.state.assert_called_once_with(refresh_metadata=True)
+            persist.assert_called_once_with(chosen)
+            app._apply_state.assert_called_once_with(state)
+            app._invalidate_plan.assert_called_once()
+            app.status_var.set.assert_called_with(
+                "Steam 目录已更新，可以选择分类方式并生成预览"
+            )
+
+    def test_fallback_directory_choice_cancel_is_noop(self):
+        from steam_desktop import filedialog
+
+        organizer = mock.Mock()
+        organizer.library.root = Path.cwd()
+        app = self._fallback_app(organizer)
+        app._run_task = mock.Mock()
+
+        with mock.patch.object(filedialog, "askdirectory", return_value=""):
+            app.choose_steam_root()
+
+        app._run_task.assert_not_called()
+        organizer.set_steam_root.assert_not_called()
+
+    def test_fallback_invalid_directory_does_not_persist_or_replace_ui_state(self):
+        from steam_desktop import filedialog
+
+        organizer = mock.Mock()
+        current = Path.cwd()
+        organizer.library.root = current
+        organizer.lock = mock.MagicMock()
+        organizer.set_steam_root.side_effect = SteamError("目录不是可用的 Steam 安装目录")
+        app = self._fallback_app(organizer)
+        failures = []
+
+        def run_now(_name, _label, work, on_success, **_kwargs):
+            try:
+                on_success(work())
+            except Exception as exc:
+                failures.append(exc)
+            return True
+
+        app._run_task = mock.Mock(side_effect=run_now)
+        with mock.patch.object(
+            filedialog,
+            "askdirectory",
+            return_value=str(current / "not-steam"),
+        ), mock.patch("steam_desktop.save_steam_root") as persist:
+            app.choose_steam_root()
+
+        self.assertEqual(len(failures), 1)
+        self.assertIsInstance(failures[0], SteamError)
+        self.assertEqual(app.state_data, {"marker": "unchanged"})
+        self.assertEqual(organizer.library.root, current)
+        persist.assert_not_called()
+        app._apply_state.assert_not_called()
 
 
 if __name__ == "__main__":

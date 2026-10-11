@@ -1,7 +1,7 @@
 # Third-Party Notices
 
 This file lists third-party software and UI references associated with the
-Steam Library Organizer v1.0.1 Windows x64 build. Exact Python package versions
+Steam Library Organizer v1.0.2 Windows x64 build. Exact Python package versions
 are pinned in `requirements-lock.txt`; verbatim license texts are stored under
 `THIRD_PARTY_LICENSES/` and must be shipped with the release archive.
 
@@ -34,7 +34,7 @@ MIT; this distribution retains the verbatim upstream license.
 
 ## Release build toolchain
 
-The clean v1.0.1 environment also pins the following build packages. Most are
+The clean v1.0.2 environment also pins the following build packages. Most are
 not application runtime imports; PyInstaller's bootloader and runtime hooks are
 incorporated into the generated executable under the exception and licenses in
 the listed files.

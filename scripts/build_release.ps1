@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+$')]
-    [string] $Version = '1.0.1',
+    [string] $Version = '1.0.2',
 
     [ValidateSet('OneFile', 'OneDir', 'Both')]
     [string] $Layout = 'Both',
@@ -26,6 +26,21 @@ $specPath = Join-Path $buildRoot 'SteamLibraryOrganizer.spec'
 $requirementsPath = Join-Path $projectRoot 'requirements-lock.txt'
 $generatedRoot = Join-Path $buildRoot 'generated'
 $generatedVersionPath = Join-Path $generatedRoot 'SteamLibraryOrganizer.version.txt'
+$pythonSources = @(
+    'steam_modern.py',
+    'steam_desktop.py',
+    'steam_settings.py',
+    'steam_appinfo.py',
+    'steam_library_core.py',
+    'steam_web.py'
+) | ForEach-Object { Join-Path $projectRoot $_ }
+$javascriptSource = Join-Path $projectRoot 'steam_ui\app.js'
+$nodeCommand = Get-Command node -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+if (-not $nodeCommand) {
+    throw 'Node.js was not found. Install Node.js so the release script can validate steam_ui\app.js.'
+}
+$nodePath = [IO.Path]::GetFullPath($nodeCommand.Source)
 $managedEnvironmentNames = @(
     'TEMP',
     'TMP',
@@ -259,6 +274,15 @@ try {
     New-Item -ItemType Directory -Path $buildRoot -Force | Out-Null
     Remove-SafeDirectory -Path $tempRoot -AllowedParent $buildRoot
     New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
+
+    # Older development builds wrote an Anaconda-contaminated binary directly
+    # under dist/. Official artifacts live only in dist/release; remove the
+    # ambiguous legacy location so it cannot be uploaded by mistake.
+    $legacyDistExecutable = Join-Path $distRoot 'SteamLibraryOrganizer.exe'
+    if (Test-Path -LiteralPath $legacyDistExecutable -PathType Leaf) {
+        Remove-Item -LiteralPath $legacyDistExecutable -Force
+        Write-Host "Removed obsolete build artifact: $legacyDistExecutable" -ForegroundColor DarkYellow
+    }
     $env:TEMP = $tempRoot
     $env:TMP = $tempRoot
     $env:PYTHONNOUSERSITE = '1'
@@ -339,6 +363,12 @@ try {
     Invoke-Checked 'Verify application and release versions match' {
         & $venvPython -I -c "import sys; sys.path.insert(0, sys.argv[1]); import steam_modern; assert steam_modern.APP_VERSION == sys.argv[2], f'APP_VERSION={steam_modern.APP_VERSION}, release={sys.argv[2]}'" $projectRoot $Version
     }
+    Invoke-Checked 'Compile Python modules' {
+        & $venvPython -m py_compile @pythonSources
+    }
+    Invoke-Checked 'Check embedded UI JavaScript syntax' {
+        & $nodePath --check $javascriptSource
+    }
 
     if (-not $SkipTests) {
         Invoke-Checked 'Run unit tests in the clean release environment' {
@@ -375,7 +405,7 @@ try {
         $portableName = "SteamLibraryOrganizer-$Version-win-x64-portable"
         $portableStage = Join-Path $releaseRoot $portableName
         Copy-Item -LiteralPath $oneDirSource -Destination $portableStage -Recurse
-        foreach ($document in 'README.md', 'THIRD_PARTY_NOTICES.md') {
+        foreach ($document in 'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md') {
             $documentPath = Join-Path $projectRoot $document
             if (Test-Path -LiteralPath $documentPath) {
                 Copy-Item -LiteralPath $documentPath -Destination $portableStage
@@ -401,6 +431,10 @@ try {
     $noticesPath = Join-Path $projectRoot 'THIRD_PARTY_NOTICES.md'
     if (Test-Path -LiteralPath $noticesPath) {
         Copy-Item -LiteralPath $noticesPath -Destination $licenseStage
+    }
+    $projectLicensePath = Join-Path $projectRoot 'LICENSE'
+    if (Test-Path -LiteralPath $projectLicensePath -PathType Leaf) {
+        Copy-Item -LiteralPath $projectLicensePath -Destination $licenseStage
     }
     $licensesPath = Join-Path $projectRoot 'THIRD_PARTY_LICENSES'
     if (Test-Path -LiteralPath $licensesPath -PathType Container) {

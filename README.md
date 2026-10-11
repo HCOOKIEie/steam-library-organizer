@@ -62,13 +62,14 @@ py -3.13-64 -m venv .venv
 SteamLibraryOrganizer.exe  可直接运行的 Windows 桌面版
 steam_modern.py            WebView2 桌面外壳与受控 Python 接口
 steam_desktop.py           tkinter 兼容回退界面
+steam_settings.py          两套桌面界面共用的本机设置
 steam_library_core.py      扫描、分类、备份、写入和恢复
 steam_appinfo.py           Steam appinfo.vdf 离线解析器
 steam_web.py               开发与回归用本地服务
 steam_ui/                  嵌入式 HTML/CSS/JavaScript 界面
 THIRD_PARTY_NOTICES.md     Uiverse 来源与第三方许可
 THIRD_PARTY_LICENSES/      发布包所含第三方组件的完整许可文本
-RELEASE_CHECKLIST.md       v1.0.1 可复现构建与发布检查清单
+RELEASE_CHECKLIST.md       v1.0.2 可复现构建与发布检查清单
 legacy/                    早期实现，仅供追溯，请勿用于真实数据
 ```
 
@@ -78,21 +79,21 @@ legacy/                    早期实现，仅供追溯，请勿用于真实数�
 
 ```powershell
 python -m unittest discover -s tests -v
-python -m py_compile steam_modern.py steam_desktop.py steam_appinfo.py steam_library_core.py steam_web.py
+python -m py_compile steam_modern.py steam_desktop.py steam_settings.py steam_appinfo.py steam_library_core.py steam_web.py
 node --check steam_ui\app.js
 ```
 
 发布要求完整回归测试全部通过。自动测试会覆盖临时测试数据上的写入与恢复；正式发布还应在隔离的测试账号/可还原数据上完成实机冒烟测试，不要直接拿主力收藏夹做首次验证。
 
-`v1.0.1` 的发布构建改用 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖，避免把 Anaconda 或开发机中的无关模块混入 EXE；支持范围仍是 Windows 10/11 x64。Windows EXE 尚未进行代码签名。
+`v1.0.2` 延续 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖构建，避免把 Anaconda 或开发机中的无关模块混入 EXE；兼容回退界面也能选择并记住非默认 Steam 目录。支持范围仍是 Windows 10/11 x64，Windows EXE 尚未进行代码签名。
 
 构建 Windows 发布包：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.0.1 -Layout Both
+powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.0.2 -Layout Both
 ```
 
-脚本会新建 `.venv-release`、安装 `requirements-lock.txt`、运行测试、构建推荐的 onedir ZIP 与单文件备选、复制第三方许可并生成 SHA-256。发布前仍应检查构建日志与 PyInstaller TOC，确认路径不含 Anaconda、用户级 `site-packages` 或其他工作区。完整步骤见 `RELEASE_CHECKLIST.md`。
+构建机还需安装 Node.js，用于在打包前检查内嵌界面的 JavaScript 语法。脚本会新建 `.venv-release`、安装 `requirements-lock.txt`、运行测试、编译检查 Python、检查 JavaScript、构建推荐的 onedir ZIP 与单文件备选、复制许可文件并生成 SHA-256；同时会删除旧版曾写在 `dist\SteamLibraryOrganizer.exe` 的歧义产物，正式上传只使用 `dist\release\`。发布前仍应检查构建日志与 PyInstaller TOC，确认路径不含 Anaconda、用户级 `site-packages` 或其他工作区。完整步骤见 `RELEASE_CHECKLIST.md`。
 
 ## 许可状态
 

@@ -23,37 +23,41 @@ if exist "%~dp0.venv\Scripts\python.exe" (
   exit /b %errorlevel%
 )
 
-where pythonw.exe >nul 2>nul
+where py.exe >nul 2>nul
 if not errorlevel 1 (
-  start "" pythonw.exe "%~dp0steam_modern.py"
-  exit /b 0
-)
-
-where python.exe >nul 2>nul
-if not errorlevel 1 (
-  python.exe "%~dp0steam_modern.py"
-  exit /b %errorlevel%
+  py.exe -3.13-64 -V >nul 2>nul
+  if not errorlevel 1 (
+    where pyw.exe >nul 2>nul
+    if not errorlevel 1 (
+      start "" pyw.exe -3.13-64 "%~dp0steam_modern.py"
+      exit /b 0
+    )
+    py.exe -3.13-64 "%~dp0steam_modern.py"
+    exit /b %errorlevel%
+  )
 )
 
 goto missing_python
 
 :legacy_source
 
-where pythonw.exe >nul 2>nul
+where py.exe >nul 2>nul
 if not errorlevel 1 (
-  start "" pythonw.exe "%~dp0steam_desktop.py"
-  exit /b 0
-)
-
-where python.exe >nul 2>nul
-if not errorlevel 1 (
-  python.exe "%~dp0steam_desktop.py"
-  exit /b %errorlevel%
+  py.exe -3.13-64 -V >nul 2>nul
+  if not errorlevel 1 (
+    where pyw.exe >nul 2>nul
+    if not errorlevel 1 (
+      start "" pyw.exe -3.13-64 "%~dp0steam_desktop.py"
+      exit /b 0
+    )
+    py.exe -3.13-64 "%~dp0steam_desktop.py"
+    exit /b %errorlevel%
+  )
 )
 
 :missing_python
 
-echo Python 3 was not found. Install Python 3 or use SteamLibraryOrganizer.exe.
+echo CPython 3.13 x64 was not found. Install the python.org build or use SteamLibraryOrganizer.exe.
 pause
 exit /b 1
 
