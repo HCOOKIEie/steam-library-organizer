@@ -4,6 +4,8 @@
 
 默认流程是：读取数据 → 选择分类规则 → 审阅并勾选预览 → 退出 Steam 后备份写入。默认启用“首字母 + 游戏类型”，也支持条目形式、开发商、发行商、安装状态、最近游玩和游玩时长。
 
+当前源码正在开发 **v1.1.0**，更新内容见 [CHANGELOG.md](CHANGELOG.md)。仓库中已有的 EXE 不会随源码修改自动更新；体验本次修改请从源码运行，或先使用下面的离线界面预览。正式发布仍需按 `RELEASE_CHECKLIST.md` 完成打包和实机验收。
+
 ## 下载
 
 从 [GitHub Releases](https://github.com/HCOOKIEie/steam-library-organizer/releases/latest) 下载最新版。推荐下载 `SteamLibraryOrganizer-<版本>-win-x64-portable.zip`，完整解压后运行其中的 `SteamLibraryOrganizer.exe`；该压缩包已包含第三方许可。单文件 `SteamLibraryOrganizer-<版本>-win-x64.exe` 是便携备选，但启动时需要先解包到临时目录，更容易触发杀毒软件的启发式检查；选择单文件版时，请同时下载并保留同版本的 `SteamLibraryOrganizer-<版本>-third-party-licenses.zip`。正式发布包面向 **64 位 Windows 10/11**；Windows 7/8.1、32 位 Windows 与 Windows on ARM 均未列入支持范围。
@@ -36,12 +38,31 @@ py -3.13-64 -m venv .venv
 
 ## 新桌面界面
 
-- 单窗口工作台，不跳转浏览器；扫描、规则、预览、写入状态保持在同一视图。
+- 默认提供 **RELOAD 蓝调**：P3R 风格启发的海蓝色平面设计，以粗体斜排字、斜切色块、圆弧轨道和细线构图呈现。全部由本地 HTML/CSS/SVG 绘制，不使用人物或游戏美术资源。
+- 新增 **行记 TRACES**：《明日方舟·众生行记》设计语言启发的青白 / 深青外观，以衬线排版、钴蓝坐标轴、环形刻度、几何星仪和黑白索引条呈现。纯 HTML/CSS/SVG 绘制，不含人物。
+- 顶栏提供 **RELOAD / 行记 / 简约** 三种外观；界面风格会被记住，切换不清空规则、搜索或预览勾选。
+- RELOAD 包含约 720ms 的有限入场转场、菜单悬停与选中反馈、约 480ms 的预览切入和分组错峰展开。视差仅作用于装饰层，不移动正文或控件。
+- 行记包含约 760ms 的圆环展开转场、刻度慢转、规则悬停及预览错峰浮现；装饰图形不接收鼠标或键盘输入。两种设计外观均支持亮色与深色。
+- “更多操作 → 减少动态效果”可以关闭动画与视差，也始终遵循系统减少动态效果设置；没有界面音效或自动播放音频。
+- 双栏工作台：左侧设置范围与规则，右侧查看统计、预览和操作结果。
 - 支持跟随系统的亮色/深色主题，也可在界面中手动切换并记住选择。
-- 包含状态轨道、按钮流光、卡片悬浮、勾选形变、加载反馈、抽屉与弹层动效。
+- 原生 Windows 标题栏随界面主题切换；使用系统字体、本地矢量图形和轻量过渡。
+- 提供“推荐 / 轻量整理 / 游玩习惯”三组预设，自动记住分类方式、范围、名称语言和厂商门槛。
+- 支持搜索分类或已展示的示例游戏；搜索时全选、取消及分组勾选只作用于匹配结果。
+- 连接失败、空预览和搜索无结果都有明确说明；重新扫描及生成失败后会阻止旧预览写入。
 - 遵循系统“减少动态效果”设置；键盘、焦点、对比度和屏幕阅读器语义均保留。
 - SteamID 默认脱敏，完整账号只在用户主动点击后临时显示。
-- 动效交互参考 Uiverse 社区组件并统一重绘，作者与 MIT 许可见 `THIRD_PARTY_NOTICES.md`。
+- 历史界面参考来源与第三方许可保留在 `THIRD_PARTY_NOTICES.md`。
+
+### 无需 Steam 的界面预览
+
+```powershell
+python scripts\preview_ui.py --export dist\SteamLibraryOrganizer-ui-preview.html
+```
+
+双击导出的 HTML 即可离线体验主题、规则、搜索和勾选。页面明确标记“示例数据”，所有写入、恢复及系统操作都会拒绝执行。示例使用虚构账号和 24 个游戏条目；不读取真实游戏库。`--scenario running`、`empty`、`error`、`plan-error` 可导出对应状态。厂商门槛等真实分类行为以桌面版为准。
+
+也可运行 `python scripts\preview_ui.py --port 8761` 启动仅绑定 `127.0.0.1` 的开发预览服务。
 
 ## 安全边界
 
@@ -69,7 +90,7 @@ steam_web.py               开发与回归用本地服务
 steam_ui/                  嵌入式 HTML/CSS/JavaScript 界面
 THIRD_PARTY_NOTICES.md     Uiverse 来源与第三方许可
 THIRD_PARTY_LICENSES/      发布包所含第三方组件的完整许可文本
-RELEASE_CHECKLIST.md       v1.0.2 可复现构建与发布检查清单
+RELEASE_CHECKLIST.md       v1.1.0 可复现构建与发布检查清单
 legacy/                    早期实现，仅供追溯，请勿用于真实数据
 ```
 
@@ -81,16 +102,21 @@ legacy/                    早期实现，仅供追溯，请勿用于真实数�
 python -m unittest discover -s tests -v
 python -m py_compile steam_modern.py steam_desktop.py steam_settings.py steam_appinfo.py steam_library_core.py steam_web.py
 node --check steam_ui\app.js
+node --check steam_ui\theme-bootstrap.js
+npm ci --ignore-scripts --no-audit --no-fund
+npm test
 ```
+
+Node.js 22 与 jsdom 仅用于开发期的前端回归测试，不会随桌面程序打包，也不是最终用户的运行依赖。前端测试验证 DOM 行为，不替代 WebView2 的视觉与实机验收。
 
 发布要求完整回归测试全部通过。自动测试会覆盖临时测试数据上的写入与恢复；正式发布还应在隔离的测试账号/可还原数据上完成实机冒烟测试，不要直接拿主力收藏夹做首次验证。
 
-`v1.0.2` 延续 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖构建，避免把 Anaconda 或开发机中的无关模块混入 EXE；兼容回退界面也能选择并记住非默认 Steam 目录。支持范围仍是 Windows 10/11 x64，Windows EXE 尚未进行代码签名。
+`v1.1.0` 的正式发布继续要求 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖；兼容回退界面支持选择并记住非默认 Steam 目录。支持范围仍是 Windows 10/11 x64，Windows EXE 尚未进行代码签名。
 
 构建 Windows 发布包：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.0.2 -Layout Both
+powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.1.0 -Layout Both
 ```
 
 构建机还需安装 Node.js，用于在打包前检查内嵌界面的 JavaScript 语法。脚本会新建 `.venv-release`、安装 `requirements-lock.txt`、运行测试、编译检查 Python、检查 JavaScript、构建推荐的 onedir ZIP 与单文件备选、复制许可文件并生成 SHA-256；同时会删除旧版曾写在 `dist\SteamLibraryOrganizer.exe` 的歧义产物，正式上传只使用 `dist\release\`。发布前仍应检查构建日志与 PyInstaller TOC，确认路径不含 Anaconda、用户级 `site-packages` 或其他工作区。完整步骤见 `RELEASE_CHECKLIST.md`。

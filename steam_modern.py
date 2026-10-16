@@ -36,7 +36,7 @@ from steam_web import Organizer
 
 
 APP_TITLE = "Steam 游戏库整理"
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.1.0"
 MUTEX_NAME = r"Local\SteamLibraryOrganizer.Desktop.v1"
 LOGGER = logging.getLogger("steam_library_organizer.modern")
 T = TypeVar("T")
@@ -368,6 +368,13 @@ class DesktopApi:
     def _attach_window(self, window: Any) -> None:
         self._window = window
 
+    def set_theme(self, theme: str) -> None:
+        """Match the native Windows title bar to the local page's appearance."""
+        if theme not in ("light", "dark"):
+            raise RuntimeError("未知界面主题")
+        if self._window is not None:
+            _set_native_title_bar_theme(self._window, dark=theme == "dark")
+
     def _run(self, label: str, operation: Callable[[], T]) -> T:
         try:
             return operation()
@@ -510,15 +517,15 @@ class DesktopApi:
         return self._run("打开运行日志", operation)
 
 
-def _darken_native_title_bar(window: Any) -> None:
-    """Best-effort dark title bar while retaining native resize/snap behavior."""
+def _set_native_title_bar_theme(window: Any, dark: bool = False) -> None:
+    """Best-effort matching title bar with native resize/snap behavior."""
 
     if os.name != "nt":
         return
     try:
         native_handle = window.native.Handle
         hwnd = int(native_handle.ToInt64())
-        enabled = ctypes.c_int(1)
+        enabled = ctypes.c_int(int(dark))
         for attribute in (20, 19):
             result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
                 ctypes.c_void_p(hwnd),
@@ -529,7 +536,7 @@ def _darken_native_title_bar(window: Any) -> None:
             if result == 0:
                 break
     except Exception:
-        LOGGER.debug("无法设置深色标题栏", exc_info=True)
+        LOGGER.debug("无法设置原生标题栏主题", exc_info=True)
 
 
 def _run_webview(log_path: Path) -> None:
@@ -556,13 +563,12 @@ def _run_webview(log_path: Path) -> None:
         height=840,
         min_size=(980, 680),
         resizable=True,
-        background_color="#0b0d11",
+        background_color="#f8f9fb",
         text_select=True,
         zoomable=False,
         draggable=False,
     )
     api._attach_window(window)
-    window.events.before_show += lambda: _darken_native_title_bar(window)
 
     def on_closing() -> bool:
         if not api._is_mutation_active():

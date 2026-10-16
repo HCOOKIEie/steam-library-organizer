@@ -7,6 +7,7 @@ build/
 dist/
 .pytest_cache/
 .test-tmp/
+node_modules/
 .coverage
 .env
 .env.*

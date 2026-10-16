@@ -4,8 +4,12 @@ const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
 const mobileSheetQuery = window.matchMedia('(max-width: 720px)');
 const systemThemeQuery = window.matchMedia('(prefers-color-scheme: light)');
 const THEME_STORAGE_KEY = 'steam-organizer-theme';
-let reducedMotion = reducedMotionQuery.matches;
-reducedMotionQuery.addEventListener?.('change', (event) => { reducedMotion = event.matches; });
+let reducedMotion = reducedMotionQuery.matches || document.documentElement.dataset.motion === 'reduced';
+reducedMotionQuery.addEventListener?.('change', (event) => { reducedMotion = event.matches || document.documentElement.dataset.motion === 'reduced'; });
+window.addEventListener('organizer-motion-change', (event) => { reducedMotion = reducedMotionQuery.matches || Boolean(event.detail?.reduced); });
+window.addEventListener('organizer-appearance-change', () => {
+  applyTheme(document.documentElement.dataset.theme);
+});
 
 function readStoredTheme() {
   try {
@@ -34,9 +38,11 @@ function syncThemeControl(theme) {
 function applyTheme(theme, { persist = false, announce = false } = {}) {
   const nextTheme = theme === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = nextTheme;
-  document.documentElement.style.colorScheme = nextTheme;
+  const isReload = document.documentElement.dataset.appearance === 'p3r';
+  const isTraces = document.documentElement.dataset.appearance === 'traces';
+  document.documentElement.style.colorScheme = isReload ? 'light' : nextTheme;
   const themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.content = nextTheme === 'light' ? '#eef4fa' : '#0b1118';
+  if (themeColor) themeColor.content = isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isTraces ? (nextTheme === 'light' ? '#eaf1ef' : '#101f27') : (nextTheme === 'light' ? '#f8f9fb' : '#181a20');
 
   if (persist) {
     try {
@@ -46,6 +52,9 @@ function applyTheme(theme, { persist = false, announce = false } = {}) {
   }
 
   syncThemeControl(nextTheme);
+  $('quick-theme-btn')?.setAttribute('aria-label', `切换到${nextTheme === 'light' ? '深色' : '亮色'}模式`);
+  const nativeTheme = window.pywebview?.api?.set_theme;
+  if (nativeTheme) Promise.resolve().then(() => nativeTheme(isReload ? 'dark' : nextTheme)).catch(() => {});
   if (announce && document.getElementById('toast')) {
     toast(`已切换到${nextTheme === 'light' ? '亮色' : '深色'}模式`);
   }
@@ -133,6 +142,46 @@ const MODE_CARDS = [
 ];
 
 const MODE_BY_ID = Object.fromEntries(MODE_CARDS.map((mode) => [mode.id, mode]));
+const RULE_PRESETS = {
+  recommended: ['initial', 'genre'],
+  simple: ['initial', 'state'],
+  habits: ['recent', 'playtime'],
+};
+const PREFERENCES_KEY = 'steam-organizer-preferences-v1';
+
+function loadPreferences() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PREFERENCES_KEY));
+    if (!saved || typeof saved !== 'object') return;
+    if (Array.isArray(saved.modes) && saved.modes.every((id) => typeof id === 'string' && Object.hasOwn(MODE_BY_ID, id))) {
+      state.modes = MODE_CARDS.map((mode) => mode.id).filter((id) => saved.modes.includes(id));
+    }
+    if (['library', 'games', 'all'].includes(saved.scope)) state.scope = saved.scope;
+    if (['schinese', 'tchinese', 'english'].includes(saved.language)) state.language = saved.language;
+    if (Number.isInteger(saved.developer_min)) $('developer-min').value = Math.min(100, Math.max(1, saved.developer_min));
+  } catch (_) { /* Unavailable storage or invalid settings should never block startup. */ }
+}
+
+function savePreferences() {
+  try {
+    window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(currentPlanConfig()));
+  } catch (_) {}
+}
+
+function syncRuleControls() {
+  $('mode-count').textContent = `${state.modes.length} 项已启用`;
+  document.querySelectorAll('.preset').forEach((button) => {
+    const modes = RULE_PRESETS[button.dataset.preset];
+    const enabled = modes.length === state.modes.length && modes.every((id) => state.modes.includes(id));
+    button.classList.toggle('is-on', enabled);
+    button.setAttribute('aria-pressed', String(enabled));
+  });
+  document.querySelectorAll('.seg').forEach((button) => {
+    const enabled = button.dataset.lang === state.language;
+    button.classList.toggle('is-on', enabled);
+    button.setAttribute('aria-pressed', String(enabled));
+  });
+}
 
 const DEFAULT_SCOPES = [
   {
@@ -161,7 +210,7 @@ const ICONS = {
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>',
   clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   timer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4"/><path d="M12 8v5"/><circle cx="12" cy="14" r="7"/></svg>',
-  caret: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+  caret: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
 };
 
 const $ = (id) => document.getElementById(id);
@@ -261,11 +310,13 @@ function updateProgress() {
   let current = 1;
   if (state.scanReady) current = 2;
   if (state.plan.length) current = 3;
-  if (state.planFresh && state.selected.size) current = 4;
+  if (state.busy.apply || state.planCommitted) current = 4;
   document.querySelectorAll('.progress-step').forEach((step) => {
     const value = Number(step.dataset.step);
     step.classList.toggle('is-current', value === current);
     step.classList.toggle('is-complete', value < current);
+    if (value === current) step.setAttribute('aria-current', 'step');
+    else step.removeAttribute('aria-current');
     const index = step.querySelector('.progress-index');
     index.textContent = value < current ? '✓' : String(value);
   });
@@ -285,6 +336,8 @@ function configsEqual(left, right) {
 }
 
 function syncPlanFreshness(message = '') {
+  savePreferences();
+  syncRuleControls();
   if (!state.plan.length) {
     state.planFresh = false;
     $('plan-status').textContent = state.scanReady ? '选择分类方式，然后生成安全预览。' : '扫描完成后即可生成预览。';
@@ -293,10 +346,11 @@ function syncPlanFreshness(message = '') {
     return;
   }
 
-  state.planFresh = !state.planCommitted && configsEqual(state.planConfig, currentPlanConfig());
+  state.planFresh = Boolean(state.planId) && !state.planCommitted && configsEqual(state.planConfig, currentPlanConfig());
   const panel = $('preview-panel');
   panel.classList.toggle('is-stale', !state.planFresh);
   $('stale-banner').hidden = state.planFresh;
+  $('preview-badge').textContent = state.planCommitted ? '已写入' : (state.planFresh ? '待审阅' : '需要更新');
   if (state.planFresh) {
     $('plan-status').textContent = '预览与当前设置一致，可以继续审阅。';
   } else {
@@ -336,6 +390,7 @@ function renderModes() {
     host.appendChild(button);
   });
   updateCompanyOptions();
+  syncRuleControls();
 }
 
 function updateCompanyOptions() {
@@ -497,7 +552,7 @@ function renderScanCounts() {
 }
 
 function renderState(data) {
-  if (!data?.counts) return;
+  if (!data?.counts) throw new Error('未能读取有效的 Steam 数据，请重新扫描');
   state.server = data;
   state.csrfToken = typeof data.csrf_token === 'string' && data.csrf_token
     ? data.csrf_token
@@ -505,6 +560,10 @@ function renderState(data) {
   state.scanReady = true;
   state.metadataReady = !data.appinfo_error;
   state.steamRunning = typeof data.steam_running === 'boolean' ? data.steam_running : null;
+  $('connection-error').hidden = true;
+  $('quality-card').hidden = false;
+  $('scan-indicator').classList.add('is-connected');
+  $('demo-badge').hidden = !data.demo;
 
   $('stats').setAttribute('aria-busy', 'false');
   $('account-line').textContent = data.steamid64
@@ -526,13 +585,19 @@ function renderState(data) {
   renderScanCounts();
   if (!state.metadataReady) {
     $('plan-status').textContent = '元数据尚未就绪；请点击“重新扫描”重试。';
+  } else if (!state.plan.length) {
+    $('plan-status').textContent = '规则只会在生成预览时应用。';
   }
   updateProgress();
   updateActionState();
 }
 
 async function refreshState(silent = false) {
-  if (state.busy.scan) return;
+  if (Object.values(state.busy).some(Boolean)) return;
+  if (!silent && state.plan.length) {
+    state.planConfig = null;
+    syncPlanFreshness('数据已重新扫描，请重新生成预览。');
+  }
   state.busy.scan = true;
   $('stats').setAttribute('aria-busy', 'true');
   if (!silent) setSteamPill('wait', '正在扫描本机 Steam…');
@@ -549,7 +614,15 @@ async function refreshState(silent = false) {
     state.metadataReady = false;
     state.steamRunning = null;
     state.csrfToken = null;
+    state.planConfig = null;
+    if (state.plan.length) syncPlanFreshness('无法读取当前游戏库，请重新连接后生成预览。');
     $('stats').setAttribute('aria-busy', 'false');
+    $('scan-indicator').classList.remove('is-connected');
+    $('connection-error').hidden = false;
+    $('connection-error-copy').textContent = error.message;
+    $('account-line').textContent = '点击选择 Steam 安装目录';
+    $('quality-card').hidden = true;
+    ['stat-scope', 'stat-games', 'stat-installed', 'stat-unresolved'].forEach((id) => { $(id).textContent = '—'; });
     setSteamPill('warn', '读取失败', error.message);
     $('plan-status').textContent = `无法读取 Steam：${error.message}`;
     if (!silent) log(`读取 Steam 状态失败：${error.message}`, 'error');
@@ -615,7 +688,7 @@ function selectedSummary() {
 
 function updateSectionCheckboxes() {
   document.querySelectorAll('.mode-section').forEach((section) => {
-    const groupChecks = [...section.querySelectorAll('.group-checkbox')];
+    const groupChecks = [...section.querySelectorAll('.group:not([data-filtered="true"]) .group-checkbox')];
     const sectionCheck = section.querySelector('.mode-checkbox');
     const selected = groupChecks.filter((input) => input.checked).length;
     sectionCheck.checked = selected === groupChecks.length && groupChecks.length > 0;
@@ -649,6 +722,7 @@ function createGroup(group, groupIndex) {
   const groupId = String(group.id);
   const article = make('article', 'group is-on');
   article.dataset.id = groupId;
+  article.style.setProperty('--row-index', String(Math.min(groupIndex, 10)));
 
   const row = make('div', 'group-row');
   const choice = make('label', 'group-choice');
@@ -724,12 +798,12 @@ function createModeSection(mode, groups, runningIndex) {
   groups.forEach((group, index) => list.appendChild(createGroup(group, runningIndex + index)));
 
   checkbox.addEventListener('change', () => {
-    groups.forEach((group) => {
-      const id = String(group.id);
+    list.querySelectorAll('.group:not([data-filtered="true"])').forEach((row) => {
+      const id = row.dataset.id;
       if (checkbox.checked) state.selected.add(id); else state.selected.delete(id);
+      row.classList.toggle('is-on', checkbox.checked);
+      row.querySelector('.group-checkbox').checked = checkbox.checked;
     });
-    list.querySelectorAll('.group').forEach((row) => row.classList.toggle('is-on', checkbox.checked));
-    list.querySelectorAll('.group-checkbox').forEach((input) => { input.checked = checkbox.checked; });
     renderSelectionSummary();
   });
 
@@ -743,6 +817,15 @@ function renderGroups(groups) {
   const host = $('groups');
   host.replaceChildren();
   $('preview-empty').hidden = groups.length > 0;
+  $('empty-title').textContent = '这个范围还没有可分类的条目';
+  $('empty-copy').textContent = '试试其他整理范围或分类方式，然后重新生成预览。';
+  $('preview-panel').classList.toggle('has-plan', groups.length > 0);
+  if (!groups.length) {
+    $('preview-panel').classList.remove('is-stale');
+    $('stale-banner').hidden = true;
+  }
+  $('preview-stats').hidden = groups.length === 0;
+  $('preview-badge').textContent = groups.length ? '待审阅' : '无可用分类';
 
   const byMode = new Map();
   groups.forEach((group) => {
@@ -767,13 +850,16 @@ function renderGroups(groups) {
   renderWarnings();
   renderSelectionSummary();
   $('preview-search').value = '';
+  filterPreview();
   $('preview-scroll').scrollTop = 0;
 }
 
 async function makePlan() {
-  if (!state.scanReady || !state.modes.length || state.busy.plan) return;
+  if (!state.scanReady || !state.metadataReady || !state.modes.length || Object.values(state.busy).some(Boolean)) return;
   const config = currentPlanConfig();
   state.busy.plan = true;
+  state.planConfig = null;
+  state.planFresh = false;
   $('plan-status').textContent = '正在根据当前范围生成预览…';
   updateActionState();
   try {
@@ -787,9 +873,12 @@ async function makePlan() {
     renderGroups(data.groups);
     syncPlanFreshness();
     $('result-panel').hidden = true;
+    window.dispatchEvent(new CustomEvent('organizer-preview-ready'));
     log(`预览已生成：${formatNumber(data.groups.length)} 个分类，${formatNumber(state.planSummary.unique_apps)} 个唯一条目，${formatNumber(state.planSummary.memberships)} 次归属`, 'good');
     $('preview-search').focus({ preventScroll: true });
   } catch (error) {
+    state.planConfig = null;
+    state.planFresh = false;
     syncPlanFreshness(`生成预览失败：${error.message}`);
     $('plan-status').textContent = `生成预览失败：${error.message}`;
     log(`生成预览失败：${error.message}`, 'error');
@@ -937,7 +1026,7 @@ const sheet = {
     this.host.hidden = false;
     this.scrim.hidden = false;
     document.body.classList.add('modal-open');
-    [$('page-header'), $('workspace'), $('actionbar')].forEach((element) => { element.inert = true; });
+    [$('page-header'), $('workspace'), $('actionbar'), $('diagnostics'), document.querySelector('.progress-rail')].forEach((element) => { element.inert = true; });
 
     this.scrim.style.opacity = '';
     requestAnimationFrame(() => {
@@ -989,7 +1078,7 @@ const sheet = {
     this.scrim.hidden = true;
     this.offset = 0;
     document.body.classList.remove('modal-open');
-    [$('page-header'), $('workspace'), $('actionbar')].forEach((element) => { element.inert = false; });
+    [$('page-header'), $('workspace'), $('actionbar'), $('diagnostics'), document.querySelector('.progress-rail')].forEach((element) => { element.inert = false; });
     if (this.lastFocus instanceof HTMLElement) this.lastFocus.focus();
   },
 };
@@ -1023,7 +1112,7 @@ function showResult(title, copy, path = '') {
 
 function askApply() {
   const summary = selectedSummary();
-  if (!state.planFresh || !summary.groups || state.steamRunning !== false) return;
+  if (!state.planFresh || !summary.groups || state.steamRunning !== false || Object.values(state.busy).some(Boolean)) return;
   sheet.open({
     kicker: '最后确认',
     title: '备份并写入 Steam',
@@ -1063,7 +1152,7 @@ function askApply() {
 }
 
 function askRestore() {
-  if (!state.scanReady || state.steamRunning !== false || state.busy.restore) return;
+  if (!state.scanReady || state.steamRunning !== false || Object.values(state.busy).some(Boolean)) return;
   sheet.open({
     kicker: '恢复保护',
     title: '恢复最近一次备份？',
@@ -1120,7 +1209,7 @@ async function revealFolder() {
 }
 
 async function chooseSteamRoot() {
-  if (state.busy.root) return;
+  if (Object.values(state.busy).some(Boolean)) return;
   state.busy.root = true;
   closeMoreMenu();
   updateActionState();
@@ -1132,9 +1221,20 @@ async function chooseSteamRoot() {
     state.planSummary = null;
     state.planConfig = null;
     state.planFresh = false;
+    state.planCommitted = false;
     state.selected.clear();
     $('groups').replaceChildren();
     $('preview-empty').hidden = false;
+    $('preview-panel').classList.remove('has-plan', 'is-stale');
+    $('stale-banner').hidden = true;
+    $('preview-stats').hidden = true;
+    $('preview-warnings').hidden = true;
+    $('preview-badge').textContent = '尚未生成';
+    $('preview-context').textContent = '先生成预览，确认满意后再写入 Steam。';
+    $('empty-title').textContent = '好分类，从一份预览开始。';
+    $('empty-copy').textContent = '在左侧选好分类方式，生成专属于你的整理方案。每个分类都可以检查、勾选，满意后再写入。';
+    $('preview-search').value = '';
+    filterPreview();
     $('result-panel').hidden = true;
     renderState(data.state || data);
     log(`已切换 Steam 目录：${(data.state || data).steam_root}`, 'good');
@@ -1180,14 +1280,33 @@ function filterPreview() {
     const visible = [...section.querySelectorAll('.group')].some((row) => row.dataset.filtered !== 'true');
     section.hidden = !visible;
   });
+  const visibleCount = document.querySelectorAll('.group:not([data-filtered="true"])').length;
+  $('search-empty').hidden = !query || !state.plan.length || visibleCount > 0;
+  $('search-result-count').textContent = query && state.plan.length ? `${visibleCount} / ${state.plan.length} 个分类` : '';
+  $('select-all').textContent = query ? '全选结果' : '全选';
+  $('select-none').textContent = query ? '取消结果' : '全不选';
+  updateSectionCheckboxes();
+  updateActionState();
+}
+
+function selectVisibleGroups(checked) {
+  if (state.busy.apply || state.busy.restore || state.busy.plan) return;
+  document.querySelectorAll('.group:not([data-filtered="true"])').forEach((row) => {
+    if (checked) state.selected.add(row.dataset.id); else state.selected.delete(row.dataset.id);
+    row.classList.toggle('is-on', checked);
+    row.querySelector('.group-checkbox').checked = checked;
+  });
+  renderSelectionSummary();
 }
 
 function updateActionState() {
+  updateProgress();
   const anyBusy = Object.values(state.busy).some(Boolean);
+  document.documentElement.dataset.activity = ['apply', 'restore', 'plan', 'scan', 'root'].find((key) => state.busy[key]) || 'idle';
   const summary = selectedSummary();
   const planButton = $('plan-btn');
   const applyButton = $('apply-btn');
-  planButton.disabled = state.busy.plan || state.busy.apply || state.busy.restore || !state.scanReady || !state.metadataReady || state.modes.length === 0;
+  planButton.disabled = anyBusy || !state.scanReady || !state.metadataReady || state.modes.length === 0;
   planButton.textContent = state.busy.plan ? '正在生成预览…' : (state.plan.length ? '重新生成预览' : '生成分类预览');
 
   let applyBlock = '';
@@ -1219,10 +1338,16 @@ function updateActionState() {
     $('action-hint').textContent = '正在读取本地配置、库缓存和安装记录';
   } else if (!state.scanReady) {
     $('action-title').textContent = '尚未连接 Steam';
-    $('action-hint').textContent = '请重新扫描，或从右上角选择 Steam 安装目录';
+    $('action-hint').textContent = '重新扫描，或选择 Steam 安装目录';
   } else if (state.busy.plan) {
     $('action-title').textContent = '正在生成安全预览';
     $('action-hint').textContent = '正在按所选规则计算分类，不会改动 Steam';
+  } else if (!state.metadataReady) {
+    $('action-title').textContent = '游戏资料尚未就绪';
+    $('action-hint').textContent = '重新扫描后即可生成分类预览';
+  } else if (!state.plan.length && state.planId) {
+    $('action-title').textContent = '当前没有可用分类';
+    $('action-hint').textContent = '调整整理范围或分类方式，然后重新生成';
   } else if (!state.plan.length) {
     $('action-title').textContent = '数据已就绪';
     $('action-hint').textContent = state.modes.length ? '检查左侧规则，然后生成分类预览' : '请至少选择一种分类方式';
@@ -1240,13 +1365,27 @@ function updateActionState() {
     $('action-hint').textContent = `将创建 ${formatNumber(summary.groups)} 个分类，整理 ${formatNumber(summary.uniqueApps)} 个唯一条目，共 ${formatNumber(summary.memberships)} 次归属`;
   }
 
-  $('restore-btn').disabled = state.busy.restore || state.busy.apply || !state.scanReady || state.steamRunning !== false;
+  $('restore-btn').disabled = anyBusy || !state.scanReady || state.steamRunning !== false;
   $('restore-btn').title = state.steamRunning === true
     ? '请先完全退出 Steam'
     : (state.steamRunning === null ? '无法确认 Steam 状态，请重新扫描' : '');
   $('reveal-btn').disabled = state.busy.reveal || !state.scanReady;
   $('choose-root-btn').disabled = state.busy.root || state.busy.apply || state.busy.restore;
-  $('refresh-btn').disabled = state.busy.scan || state.busy.apply || state.busy.restore || state.busy.root;
+  $('refresh-btn').disabled = anyBusy;
+  $('choose-root-btn').disabled = anyBusy;
+  $('connect-steam-btn').disabled = anyBusy;
+  $('account-line').disabled = anyBusy;
+  const configBusy = state.busy.plan || state.busy.apply || state.busy.restore || state.busy.root;
+  document.querySelectorAll('.mode, .preset, .seg, .step-btn, #developer-min').forEach((element) => { element.disabled = configBusy; });
+  document.querySelectorAll('#scopes input').forEach((element) => {
+    const scope = normalizeScopes(state.server?.scopes).find((item) => item.id === element.value);
+    element.disabled = configBusy || scope?.available === false;
+  });
+  document.querySelectorAll('.group-checkbox, .mode-checkbox').forEach((element) => { element.disabled = configBusy; });
+  const noVisibleGroups = !document.querySelector('.group:not([data-filtered="true"])');
+  $('select-all').disabled = configBusy || noVisibleGroups;
+  $('select-none').disabled = configBusy || noVisibleGroups;
+  $('preview-scroll').setAttribute('aria-busy', String(state.busy.plan));
 }
 
 /* Boot ------------------------------------------------------------------ */
@@ -1256,6 +1395,7 @@ function boot() {
   const storedTheme = readStoredTheme();
   const initialTheme = storedTheme || (systemThemeQuery.matches ? 'light' : 'dark');
   applyTheme(initialTheme);
+  loadPreferences();
   renderModes();
   renderScopes();
   sheet.init();
@@ -1270,17 +1410,42 @@ function boot() {
   $('refresh-btn').addEventListener('click', () => refreshState());
   $('account-line').addEventListener('click', chooseSteamRoot);
   $('choose-root-btn').addEventListener('click', chooseSteamRoot);
+  $('connect-steam-btn').addEventListener('click', chooseSteamRoot);
   $('plan-btn').addEventListener('click', makePlan);
   $('apply-btn').addEventListener('click', askApply);
   $('restore-btn').addEventListener('click', askRestore);
   $('reveal-btn').addEventListener('click', revealFolder);
   $('open-log-btn').addEventListener('click', openLogFile);
   $('theme-btn').addEventListener('click', toggleTheme);
+  $('quick-theme-btn').addEventListener('click', () => {
+    const current = document.documentElement.dataset.theme;
+    applyTheme(current === 'light' ? 'dark' : 'light', { persist: true, announce: true });
+  });
+  document.querySelectorAll('.preset').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.modes = [...RULE_PRESETS[button.dataset.preset]];
+      renderModes();
+      syncPlanFreshness();
+    });
+  });
   $('more-btn').addEventListener('click', (event) => {
     event.stopPropagation();
     toggleMoreMenu();
   });
   $('more-menu').addEventListener('click', (event) => event.stopPropagation());
+  $('more-menu').addEventListener('keydown', (event) => {
+    const items = [...$('more-menu').querySelectorAll('button:not([disabled])')];
+    const index = items.indexOf(document.activeElement);
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeMoreMenu();
+      $('more-btn').focus();
+    } else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : (event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length);
+      items[next]?.focus();
+    } else if (event.key === 'Tab') closeMoreMenu();
+  });
   document.addEventListener('click', closeMoreMenu);
   $('privacy-btn').addEventListener('click', () => {
     state.showAccountId = !state.showAccountId;
@@ -1292,6 +1457,11 @@ function boot() {
     closeMoreMenu();
   });
   $('preview-search').addEventListener('input', filterPreview);
+  $('clear-search-btn').addEventListener('click', () => {
+    $('preview-search').value = '';
+    filterPreview();
+    $('preview-search').focus();
+  });
 
   $('scopes').addEventListener('change', (event) => {
     if (!event.target.matches('input[name="scope"]')) return;
@@ -1300,19 +1470,8 @@ function boot() {
     syncPlanFreshness();
   });
 
-  $('select-all').addEventListener('click', () => {
-    state.selected = new Set(state.plan.map((group) => String(group.id)));
-    document.querySelectorAll('.group').forEach((row) => row.classList.add('is-on'));
-    document.querySelectorAll('.group-checkbox').forEach((input) => { input.checked = true; });
-    renderSelectionSummary();
-  });
-
-  $('select-none').addEventListener('click', () => {
-    state.selected.clear();
-    document.querySelectorAll('.group').forEach((row) => row.classList.remove('is-on'));
-    document.querySelectorAll('.group-checkbox').forEach((input) => { input.checked = false; });
-    renderSelectionSummary();
-  });
+  $('select-all').addEventListener('click', () => selectVisibleGroups(true));
+  $('select-none').addEventListener('click', () => selectVisibleGroups(false));
 
   document.querySelectorAll('.step-btn').forEach((button) => {
     button.addEventListener('click', () => {
@@ -1341,6 +1500,7 @@ function boot() {
   });
 
   document.addEventListener('keydown', (event) => {
+    if (!$('sheet').hidden) return;
     if (!event.ctrlKey || event.altKey || event.metaKey) return;
     const key = event.key.toLowerCase();
     if (key === 'r') {

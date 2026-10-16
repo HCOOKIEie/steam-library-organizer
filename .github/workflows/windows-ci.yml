@@ -62,8 +62,19 @@ jobs:
           steam_library_core.py
           steam_web.py
 
-      - name: Check JavaScript syntax
-        run: node --check steam_ui\app.js
+      - name: Set up Node.js for UI regression tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install UI test dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Check JavaScript and UI behavior
+        run: |
+          npm run check
+          npm test
 
       - name: Build frozen one-directory smoke package
         shell: pwsh
@@ -89,7 +100,10 @@ jobs:
             '_internal\_tkinter.pyd',
             '_internal\steam_ui\index.html',
             '_internal\steam_ui\styles.css',
+            '_internal\steam_ui\p3r.css',
+            '_internal\steam_ui\traces.css',
             '_internal\steam_ui\theme-bootstrap.js',
+            '_internal\steam_ui\appearance.js',
             '_internal\steam_ui\app.js',
             '_internal\webview\lib\Microsoft.Web.WebView2.Core.dll',
             '_internal\webview\lib\Microsoft.Web.WebView2.WinForms.dll',

@@ -1,7 +1,7 @@
 # Third-Party Notices
 
 This file lists third-party software and UI references associated with the
-Steam Library Organizer v1.0.2 Windows x64 build. Exact Python package versions
+Steam Library Organizer v1.1.0 Windows x64 build. Exact Python package versions
 are pinned in `requirements-lock.txt`; verbatim license texts are stored under
 `THIRD_PARTY_LICENSES/` and must be shipped with the release archive.
 
@@ -34,7 +34,7 @@ MIT; this distribution retains the verbatim upstream license.
 
 ## Release build toolchain
 
-The clean v1.0.2 environment also pins the following build packages. Most are
+The clean v1.1.0 environment also pins the following build packages. Most are
 not application runtime imports; PyInstaller's bootloader and runtime hooks are
 incorporated into the generated executable under the exception and licenses in
 the listed files.
@@ -49,15 +49,41 @@ the listed files.
 | pywin32-ctypes | 0.2.3 | BSD-3-Clause | `THIRD_PARTY_LICENSES/pywin32-ctypes-0.2.3.txt` |
 | setuptools | 84.0.0 | MIT and bundled notices | `THIRD_PARTY_LICENSES/setuptools-84.0.0.txt` |
 
-## Uiverse interaction references
+## Development-only UI checks
 
-The Steam Library Organizer interface includes adapted interaction ideas from
+The Node.js test harness uses jsdom 26.1.0 (MIT), pinned with its dependency
+graph in `package-lock.json`. These packages are development tools and are not
+bundled in the Windows application or offline HTML preview.
+
+## TRACES appearance
+
+The optional TRACES appearance is an original local HTML/CSS/SVG implementation
+inspired by the geometric composition, coordinate lines and serif typography
+of Arknights' 众生行记 event interface. Visual reference:
+[UI / interaction / motion archive by 胖鱼鱼呀](https://www.bilibili.com/video/BV1WFkwBJEhR/).
+No game artwork, characters, logos, screenshots, proprietary fonts, music or
+video are bundled. Arknights belongs to its respective rights holders; this
+community project is not affiliated with or endorsed by them.
+
+## RELOAD appearance
+
+The optional RELOAD appearance is an original CSS layout inspired by the
+geometric typography and blue palette of Persona 3 Reload, with the user's
+[video reference](https://www.bilibili.com/video/BV1Xntq6hEvK/) as visual direction.
+It contains no character illustrations, game screenshots, downloaded game
+assets, proprietary fonts, or audio. Shapes are implemented in HTML/CSS/SVG;
+typefaces resolve to local system fonts.
+
+## Historical Uiverse interaction references
+
+Earlier versions of the Steam Library Organizer included interaction ideas from
 community components published by [Uiverse.io](https://uiverse.io/) and mirrored
 in the [Uiverse Galaxy](https://github.com/uiverse-io/galaxy) repository.
 
-The components were redrawn to use this application's visual tokens,
-accessibility semantics, reduced-motion behavior, and desktop layout. No
-third-party JavaScript runtime is bundled.
+The v1.1.0 redesign removes the decorative shine, grid, morphing checkbox, and
+animated cards. The historical source attributions and license remain below.
+The interface uses local system fonts and inline vector artwork. No third-party
+JavaScript runtime is bundled.
 
 ## Referenced components
 

@@ -1,0 +1,13 @@
+{
+  "name": "steam-library-organizer-ui-checks",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Development-only DOM regression checks; the desktop application has no Node.js runtime dependency.",
+  "scripts": {
+    "test": "node --test tests/ui.test.cjs",
+    "check": "node --check steam_ui/app.js && node --check steam_ui/theme-bootstrap.js && node --check steam_ui/appearance.js"
+  },
+  "devDependencies": {
+    "jsdom": "26.1.0"
+  }
+}

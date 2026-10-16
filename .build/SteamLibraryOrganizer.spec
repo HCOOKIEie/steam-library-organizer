@@ -26,7 +26,7 @@ if BUILD_MODE not in {"onefile", "onedir"}:
 
 ENTRY_POINT = PROJECT_ROOT / "steam_modern.py"
 UI_ROOT = PROJECT_ROOT / "steam_ui"
-UI_FILES = ("index.html", "styles.css", "theme-bootstrap.js", "app.js")
+UI_FILES = ("index.html", "styles.css", "p3r.css", "traces.css", "theme-bootstrap.js", "appearance.js", "app.js")
 
 required_paths = [ENTRY_POINT, VERSION_FILE]
 required_paths.extend(UI_ROOT / name for name in UI_FILES)

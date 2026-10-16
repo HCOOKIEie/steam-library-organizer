@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+$')]
-    [string] $Version = '1.0.2',
+    [string] $Version = '1.1.0',
 
     [ValidateSet('OneFile', 'OneDir', 'Both')]
     [string] $Layout = 'Both',
@@ -369,10 +369,27 @@ try {
     Invoke-Checked 'Check embedded UI JavaScript syntax' {
         & $nodePath --check $javascriptSource
     }
+    Invoke-Checked 'Check theme bootstrap JavaScript syntax' {
+        & $nodePath --check (Join-Path $projectRoot 'steam_ui\theme-bootstrap.js')
+    }
+    Invoke-Checked 'Check appearance choreography JavaScript syntax' {
+        & $nodePath --check (Join-Path $projectRoot 'steam_ui\appearance.js')
+    }
 
     if (-not $SkipTests) {
         Invoke-Checked 'Run unit tests in the clean release environment' {
             & $venvPython -m unittest discover -s tests -v
+        }
+        $npmCommand = Get-Command npm.cmd -CommandType Application -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+        if (-not $npmCommand) {
+            throw 'npm.cmd was not found. Install Node.js with npm to run UI regression tests.'
+        }
+        Invoke-Checked 'Install locked development-only UI test dependencies' {
+            & $npmCommand.Source ci --ignore-scripts --no-audit --no-fund
+        }
+        Invoke-Checked 'Run UI regression tests' {
+            & $npmCommand.Source test
         }
     }
 
