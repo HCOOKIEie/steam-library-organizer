@@ -35,7 +35,7 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-.p3r-only, .traces-only, .appearance-wipe { display: none; }
+.p3r-only, .p5r-only, .appearance-wipe { display: none; }
 .appearance-switch { display: flex; gap: 2px; padding: 3px; margin-right: 12px; border: 1px solid var(--stroke); border-radius: 7px; background: var(--surface-2); }
 .appearance-switch button { border: 0; border-radius: 4px; padding: 4px 9px; background: transparent; color: var(--muted); font-size: 11px; white-space: nowrap; }
 .appearance-switch button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px #17213812; }

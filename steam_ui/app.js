@@ -39,10 +39,11 @@ function applyTheme(theme, { persist = false, announce = false } = {}) {
   const nextTheme = theme === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = nextTheme;
   const isReload = document.documentElement.dataset.appearance === 'p3r';
-  const isTraces = document.documentElement.dataset.appearance === 'traces';
+  const isRoyal = document.documentElement.dataset.appearance === 'p5r';
+  const isVault = document.documentElement.dataset.appearance === 'vault';
   document.documentElement.style.colorScheme = isReload ? 'light' : nextTheme;
   const themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.content = isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isTraces ? (nextTheme === 'light' ? '#eaf1ef' : '#101f27') : (nextTheme === 'light' ? '#f8f9fb' : '#181a20');
+  if (themeColor) themeColor.content = isVault ? (nextTheme === 'light' ? '#f5f3f8' : '#08080a') : isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isRoyal ? (nextTheme === 'light' ? '#e21d30' : '#c90d25') : (nextTheme === 'light' ? '#f8f9fb' : '#181a20');
 
   if (persist) {
     try {
@@ -816,6 +817,7 @@ function renderGroups(groups) {
   state.selected = new Set(groups.map((group) => String(group.id)));
   const host = $('groups');
   host.replaceChildren();
+  $('preview-panel').classList.add('has-preview');
   $('preview-empty').hidden = groups.length > 0;
   $('empty-title').textContent = '这个范围还没有可分类的条目';
   $('empty-copy').textContent = '试试其他整理范围或分类方式，然后重新生成预览。';
@@ -1225,7 +1227,7 @@ async function chooseSteamRoot() {
     state.selected.clear();
     $('groups').replaceChildren();
     $('preview-empty').hidden = false;
-    $('preview-panel').classList.remove('has-plan', 'is-stale');
+    $('preview-panel').classList.remove('has-plan', 'has-preview', 'is-stale');
     $('stale-banner').hidden = true;
     $('preview-stats').hidden = true;
     $('preview-warnings').hidden = true;
@@ -1274,7 +1276,9 @@ function toggleMoreMenu() {
 function filterPreview() {
   const query = $('preview-search').value.trim().toLocaleLowerCase('zh-CN');
   document.querySelectorAll('.group').forEach((row) => {
-    row.dataset.filtered = String(Boolean(query && !row.dataset.search.includes(query)));
+    const filtered = Boolean(query && !row.dataset.search.includes(query));
+    row.dataset.filtered = String(filtered);
+    row.hidden = filtered;
   });
   document.querySelectorAll('.mode-section').forEach((section) => {
     const visible = [...section.querySelectorAll('.group')].some((row) => row.dataset.filtered !== 'true');
@@ -1300,6 +1304,7 @@ function selectVisibleGroups(checked) {
 }
 
 function updateActionState() {
+  window.dispatchEvent(new CustomEvent('organizer-state-change'));
   updateProgress();
   const anyBusy = Object.values(state.busy).some(Boolean);
   document.documentElement.dataset.activity = ['apply', 'restore', 'plan', 'scan', 'root'].find((key) => state.busy[key]) || 'idle';

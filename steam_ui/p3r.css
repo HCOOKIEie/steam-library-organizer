@@ -1,4 +1,8 @@
-/* RELOAD: original geometric typography and motion, without character art. */
+@font-face {
+  font-family: 'Reload Block'; src: url('fonts/Anton-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+/* RELOAD: geometric typography and motion; profile cutout is in persona-motion.css. */
 :root[data-appearance="p3r"] {
   --bg: #006de0; --sidebar: #0088eb; --surface: #f0fcff; --surface-2: #d8f0ff;
   --surface-hover: #b7f4ff; --stroke: #9ccae9; --stroke-strong: #062154;

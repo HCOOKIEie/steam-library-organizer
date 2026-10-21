@@ -41,6 +41,8 @@ if (-not $nodeCommand) {
     throw 'Node.js was not found. Install Node.js so the release script can validate steam_ui\app.js.'
 }
 $nodePath = [IO.Path]::GetFullPath($nodeCommand.Source)
+$npmCommand = Get-Command npm.cmd -CommandType Application -ErrorAction SilentlyContinue |
+    Select-Object -First 1
 $managedEnvironmentNames = @(
     'TEMP',
     'TMP',
@@ -227,26 +229,8 @@ function Invoke-PyInstallerBuild {
         throw "The $Mode analysis contains a known contaminated environment path: $locations"
     }
 
-    $sitePackageLines = $analysisFiles | Select-String -Pattern 'site-packages' -CaseSensitive:$false
-    $foreignSitePackages = $sitePackageLines | Where-Object {
-        $normalized = $_.Line.Replace('\\', '\').Replace('/', '\')
-        $normalized.IndexOf($venvRoot, [StringComparison]::OrdinalIgnoreCase) -lt 0
-    }
-    if ($foreignSitePackages) {
-        $locations = ($foreignSitePackages | Select-Object -First 10 | ForEach-Object Path) -join ', '
-        throw "The $Mode analysis contains site-packages outside $venvRoot`: $locations"
-    }
-
-    $virtualEnvironmentLines = $analysisFiles | Select-String `
-        -Pattern '[\\/](\.venv|venv|env)[^\\/]*[\\/]' `
-        -CaseSensitive:$false
-    $foreignVirtualEnvironments = $virtualEnvironmentLines | Where-Object {
-        $normalized = $_.Line.Replace('\\', '\').Replace('/', '\')
-        $normalized.IndexOf($venvRoot, [StringComparison]::OrdinalIgnoreCase) -lt 0
-    }
-    if ($foreignVirtualEnvironments) {
-        $locations = ($foreignVirtualEnvironments | Select-Object -First 10 | ForEach-Object Path) -join ', '
-        throw "The $Mode analysis contains another virtual environment: $locations"
+    Invoke-Checked "Validate $Mode manifest environment paths" {
+        & $PythonPath -I (Join-Path $scriptRoot 'verify_build_paths.py') $modeWorkRoot $venvRoot
     }
 
     # Analysis-00.toc is PyInstaller's pre-filter input record. Inspect the
@@ -375,21 +359,34 @@ try {
     Invoke-Checked 'Check appearance choreography JavaScript syntax' {
         & $nodePath --check (Join-Path $projectRoot 'steam_ui\appearance.js')
     }
+    Invoke-Checked 'Check Collection renderer JavaScript syntax' {
+        & $nodePath --check (Join-Path $projectRoot 'steam_ui\vault.js')
+    }
+    Invoke-Checked 'Check Persona motion JavaScript syntax' {
+        & $nodePath --check (Join-Path $projectRoot 'steam_ui\persona-motion.js')
+    }
 
     if (-not $SkipTests) {
         Invoke-Checked 'Run unit tests in the clean release environment' {
             & $venvPython -m unittest discover -s tests -v
         }
-        $npmCommand = Get-Command npm.cmd -CommandType Application -ErrorAction SilentlyContinue |
-            Select-Object -First 1
         if (-not $npmCommand) {
             throw 'npm.cmd was not found. Install Node.js with npm to run UI regression tests.'
         }
-        Invoke-Checked 'Install locked development-only UI test dependencies' {
-            & $npmCommand.Source ci --ignore-scripts --no-audit --no-fund
+        # npm scripts need node on PATH, but its directory must not enter the
+        # later PyInstaller DLL search. Restore the release allowlist afterwards.
+        $releasePath = $env:PATH
+        try {
+            $env:PATH = (Split-Path -Parent $nodePath) + [IO.Path]::PathSeparator + $releasePath
+            Invoke-Checked 'Install locked development-only UI test dependencies' {
+                & $npmCommand.Source ci --ignore-scripts --no-audit --no-fund
+            }
+            Invoke-Checked 'Run UI regression tests' {
+                & $npmCommand.Source test
+            }
         }
-        Invoke-Checked 'Run UI regression tests' {
-            & $npmCommand.Source test
+        finally {
+            $env:PATH = $releasePath
         }
     }
 
