@@ -24,5 +24,5 @@
   document.documentElement.style.colorScheme = theme;
   document.documentElement.dataset.vaultView = 'collection';
   const themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.content = appearance === 'vault' ? (theme === 'light' ? '#f5f3f8' : '#08080a') : appearance === 'p3r' ? '#0654e8' : appearance === 'p5r' ? (theme === 'light' ? '#e21d30' : '#c90d25') : (theme === 'light' ? '#f8f9fb' : '#181a20');
+  if (themeColor) themeColor.content = appearance === 'vault' ? (theme === 'light' ? '#f5f3f8' : '#08080a') : appearance === 'p3r' ? '#0654e8' : appearance === 'p5r' ? (theme === 'light' ? '#e21d30' : '#c90d25') : (theme === 'light' ? '#fafbf8' : '#101210');
 })();

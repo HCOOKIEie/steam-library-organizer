@@ -2,8 +2,8 @@
 setlocal
 cd /d "%~dp0"
 
-if exist "%~dp0SteamLibraryOrganizer.exe" (
-  start "" "%~dp0SteamLibraryOrganizer.exe"
+if exist "%~dp0dist\onefile\SteamLibraryOrganizer.exe" (
+  start "" "%~dp0dist\onefile\SteamLibraryOrganizer.exe"
   exit /b 0
 )
 

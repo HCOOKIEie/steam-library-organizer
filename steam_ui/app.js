@@ -43,7 +43,7 @@ function applyTheme(theme, { persist = false, announce = false } = {}) {
   const isVault = document.documentElement.dataset.appearance === 'vault';
   document.documentElement.style.colorScheme = isReload ? 'light' : nextTheme;
   const themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.content = isVault ? (nextTheme === 'light' ? '#f5f3f8' : '#08080a') : isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isRoyal ? (nextTheme === 'light' ? '#e21d30' : '#c90d25') : (nextTheme === 'light' ? '#f8f9fb' : '#181a20');
+  if (themeColor) themeColor.content = isVault ? (nextTheme === 'light' ? '#f5f3f8' : '#08080a') : isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isRoyal ? (nextTheme === 'light' ? '#e21d30' : '#c90d25') : (nextTheme === 'light' ? '#fafbf8' : '#101210');
 
   if (persist) {
     try {
@@ -872,6 +872,7 @@ async function makePlan() {
     state.planCommitted = false;
     state.planFresh = configsEqual(config, currentPlanConfig());
     state.planSummary = normalizeSummary(data.summary, data.groups);
+    window.dispatchEvent(new CustomEvent('organizer-preview-will-render'));
     renderGroups(data.groups);
     syncPlanFreshness();
     $('result-panel').hidden = true;

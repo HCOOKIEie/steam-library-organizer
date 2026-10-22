@@ -69,6 +69,7 @@ async function setup(t, { getState, makePlan, apply, preferences, theme, appeara
   window.eval(script);
   window.eval(fs.readFileSync(path.join(ui, 'vault.js'), 'utf8'));
   window.eval(fs.readFileSync(path.join(ui, 'persona-motion.js'), 'utf8'));
+  window.eval(fs.readFileSync(path.join(ui, 'calm.js'), 'utf8'));
   window.eval('boot()');
   await settle();
   const $ = id => window.document.getElementById(id);
@@ -84,6 +85,124 @@ test('initial scan enables preview, masks the account, and keeps write hidden', 
   assert.equal($('stat-scope').textContent, '3');
   assert.ok(!$('account-line').textContent.includes('76561198000000001'));
   assert.equal(window.document.querySelector('[aria-current="step"]').dataset.step, '2');
+});
+
+test('calm card interaction settles at idle and cancels when motion is reduced or hidden', async t => {
+  const { window, $, animation } = await setup(t, { appearance: 'calm', canvas: true });
+  const art = $('calm-arrange');
+  art.getBoundingClientRect = () => ({ left: 0, top: 0, width: 400, height: 200 });
+  art.dispatchEvent(new window.MouseEvent('pointermove', { clientX: 360, clientY: 35 }));
+  for (let ms = 0; ms <= 1000; ms += 17) animation.step(ms);
+  assert.equal(animation.pending(), 0, 'The spring must stop scheduling frames once it settles');
+  assert.notEqual(art.style.getPropertyValue('--calm-ry'), '0.00deg');
+  art.click();
+  assert.equal(art.dataset.phase, 'scattered');
+  $('motion-btn').click();
+  assert.equal(art.dataset.phase, 'settled');
+  assert.equal(art.disabled, true);
+  assert.equal(art.style.getPropertyValue('--calm-ry'), '');
+  assert.equal(animation.pending(), 0);
+  $('motion-btn').click();
+  art.click();
+  assert.equal(art.dataset.phase, 'scattered');
+  Object.defineProperty(window.document, 'hidden', { configurable: true, value: true });
+  window.document.dispatchEvent(new window.Event('visibilitychange'));
+  assert.equal(art.dataset.phase, 'settled');
+  assert.equal(animation.pending(), 0);
+  await new Promise(resolve => setTimeout(resolve, 1100));
+  assert.equal(art.dataset.phase, 'settled', 'Cancelled choreography must not resume while hidden');
+});
+
+test('calm review transition stays interactive and is cancelled on reduced motion', async t => {
+  const { window, $, plan, animation } = await setup(t, { appearance: 'calm', canvas: true });
+  const motions = [];
+  for (const id of ['stats', 'preview-panel']) {
+    const element = $(id);
+    element.getBoundingClientRect = () => ({ top: $('preview-panel').classList.contains('has-preview') ? 100 : 280 });
+    element.animate = frames => {
+      const motion = { frames, cancelled: false, cancel() { this.cancelled = true; } };
+      motions.push(motion);
+      return motion;
+    };
+  }
+  await plan();
+  assert.equal(motions.length, 2);
+  assert.equal(motions[0].frames[0].transform, 'translateY(180px)');
+  assert.equal($('calm-arrange').dataset.phase, 'settled');
+  assert.equal(animation.pending(), 0);
+  assert.equal($('apply-btn').disabled, false);
+  assert.equal(window.document.activeElement, $('preview-search'));
+  window.document.querySelector('.group-checkbox').click();
+  assert.equal($('preview-groups').textContent, '2');
+  $('motion-btn').click();
+  assert.ok(motions.every(motion => motion.cancelled));
+  assert.equal($('preview-groups').textContent, '2');
+});
+
+test('calm reduced-motion startup preserves artwork, empty preview recovery, and rule feedback', async t => {
+  const { window, $, plan } = await setup(t, {
+    appearance: 'calm', systemReducedMotion: true,
+    makePlan: async () => ({ plan_id: 'empty', groups: [], summary: {} }),
+  });
+  assert.equal($('calm-arrange').disabled, true);
+  assert.equal($('calm-arrange').dataset.phase, 'settled');
+  window.document.querySelector('[data-preset="simple"]').click();
+  window.document.querySelector('[data-mode="initial"]').click();
+  await settle();
+  assert.equal($('calm-rule-count').textContent, '1 项分类规则已就绪');
+  await plan();
+  assert.equal($('preview-panel').classList.contains('has-preview'), true);
+  assert.equal($('preview-empty').hidden, false);
+  assert.equal($('apply-btn').hidden, true);
+  assert.match($('empty-title').textContent, /没有可分类/);
+});
+
+test('calm background responds to blank space and keyboard controls, then stops at idle and review', async t => {
+  const { window, $, animation, plan } = await setup(t, { appearance: 'calm', canvas: true });
+  const field = $('calm-field-canvas');
+  const stage = window.document.querySelector('.stage');
+  assert.equal(field.dataset.fieldState, 'idle');
+  stage.dispatchEvent(new window.MouseEvent('pointermove', { clientX: 650, clientY: 120, bubbles: true }));
+  animation.step(17);
+  assert.equal(field.dataset.fieldState, 'active');
+  animation.step(1100);
+  assert.equal(field.dataset.fieldState, 'idle');
+  assert.equal(animation.pending(), 0, 'No background loop remains after the cursor settles');
+  $('calm-arrange').click();
+  assert.equal(animation.pending(), 0, 'Card controls must not release background ripples');
+  stage.dispatchEvent(new window.MouseEvent('click', { clientX: 650, clientY: 100, bubbles: true }));
+  animation.step(1120);
+  assert.equal(field.dataset.fieldState, 'active');
+  animation.step(2700);
+  assert.equal(field.dataset.fieldState, 'idle');
+  $('calm-field-trigger').click();
+  animation.step(2717);
+  assert.equal(field.dataset.fieldState, 'active', 'The native button provides keyboard-equivalent activation');
+  await plan();
+  assert.equal(field.dataset.fieldState, 'paused');
+  assert.equal(animation.pending(), 0);
+  assert.equal($('apply-btn').disabled, false);
+});
+
+test('calm background cancels on hidden pages and reduced motion, with a canvas-free fallback', async t => {
+  const { window, $, animation } = await setup(t, { appearance: 'calm', canvas: true });
+  $('calm-field-trigger').click();
+  animation.step(17);
+  Object.defineProperty(window.document, 'hidden', { configurable: true, value: true });
+  window.document.dispatchEvent(new window.Event('visibilitychange'));
+  assert.equal($('calm-field-canvas').dataset.fieldState, 'paused');
+  assert.equal(animation.pending(), 0);
+  Object.defineProperty(window.document, 'hidden', { configurable: true, value: false });
+  window.document.dispatchEvent(new window.Event('visibilitychange'));
+  $('calm-field-trigger').click();
+  $('motion-btn').click();
+  assert.equal(animation.pending(), 0);
+  assert.equal($('calm-field-trigger').disabled, true);
+  assert.equal($('calm-field-canvas').dataset.fieldState, 'paused');
+  const fallback = await setup(t, { appearance: 'calm' });
+  assert.equal(fallback.$('calm-field-trigger').disabled, true);
+  assert.equal(fallback.$('calm-field-canvas').dataset.fieldState, 'unavailable');
+  assert.equal(fallback.$('plan-btn').disabled, false);
 });
 
 test('presets update rules, invalidate the preview, and survive reload', async t => {
@@ -250,6 +369,8 @@ test('the exported offline artifact boots with sample data and rejects writes', 
   assert.ok(reloadCss.includes('The Anton Project Authors'), 'Include the font license with the embedded copy');
   assert.ok(dom.window.document.querySelector('style[data-source="persona-motion.css"]'));
   assert.ok(dom.window.document.querySelector('script[data-source="persona-motion.js"]'));
+  assert.ok(dom.window.document.querySelector('style[data-source="calm.css"]'));
+  assert.ok(dom.window.document.querySelector('script[data-source="calm.js"]'));
   assert.equal((previewHtml.match(/data:image\/webp;base64,/g) || []).length, 2, 'Both character cutouts work offline');
   assert.ok(!previewHtml.includes("url('art/"));
   assert.equal(dom.window.document.querySelector('[data-appearance="traces"]'), null);

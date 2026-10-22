@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+$')]
-    [string] $Version = '1.1.0',
+    [string] $Version = '1.1.1',
 
     [ValidateSet('OneFile', 'OneDir', 'Both')]
     [string] $Layout = 'Both',
@@ -22,7 +22,7 @@ $tempRoot = [IO.Path]::GetFullPath((Join-Path $buildRoot 'temp-release'))
 $workRoot = [IO.Path]::GetFullPath((Join-Path $buildRoot 'pyinstaller-release'))
 $distRoot = [IO.Path]::GetFullPath((Join-Path $projectRoot 'dist'))
 $releaseRoot = [IO.Path]::GetFullPath((Join-Path $distRoot 'release'))
-$specPath = Join-Path $buildRoot 'SteamLibraryOrganizer.spec'
+$specPath = Join-Path $scriptRoot 'SteamLibraryOrganizer.spec'
 $requirementsPath = Join-Path $projectRoot 'requirements-lock.txt'
 $generatedRoot = Join-Path $buildRoot 'generated'
 $generatedVersionPath = Join-Path $generatedRoot 'SteamLibraryOrganizer.version.txt'
@@ -365,6 +365,9 @@ try {
     Invoke-Checked 'Check Persona motion JavaScript syntax' {
         & $nodePath --check (Join-Path $projectRoot 'steam_ui\persona-motion.js')
     }
+    Invoke-Checked 'Check calm motion JavaScript syntax' {
+        & $nodePath --check (Join-Path $projectRoot 'steam_ui\calm.js')
+    }
 
     if (-not $SkipTests) {
         Invoke-Checked 'Run unit tests in the clean release environment' {
@@ -403,14 +406,6 @@ try {
         $oneFileTarget = Join-Path $releaseRoot "SteamLibraryOrganizer-$Version-win-x64.exe"
         Copy-Item -LiteralPath $oneFileSource -Destination $oneFileTarget
 
-        # Keep the repository-root convenience binary in sync, but only after
-        # PyInstaller has completed successfully.
-        $rootExe = Join-Path $projectRoot 'SteamLibraryOrganizer.exe'
-        Copy-Item -LiteralPath $oneFileSource -Destination $rootExe -Force
-        $rootHash = (Get-FileHash -LiteralPath $rootExe -Algorithm SHA256).Hash
-        Write-Utf8NoBom `
-            -Path (Join-Path $projectRoot 'SteamLibraryOrganizer.exe.sha256') `
-            -Content "$rootHash  SteamLibraryOrganizer.exe`n"
     }
 
     if ($Layout -in 'OneDir', 'Both') {
@@ -476,6 +471,12 @@ try {
         "$hash  $($file.Name)"
     }
     Write-Utf8NoBom -Path (Join-Path $releaseRoot 'SHA256SUMS.txt') -Content (($hashLines -join "`n") + "`n")
+
+    if ($Layout -eq 'Both') {
+        Invoke-Checked 'Verify frozen assets and archive integrity' {
+            & $venvPython -I (Join-Path $scriptRoot 'verify_release.py') --version $Version
+        }
+    }
 
     Write-Host "`nRelease artifacts:" -ForegroundColor Green
     Get-ChildItem -LiteralPath $releaseRoot -File | Select-Object Name, Length, LastWriteTime

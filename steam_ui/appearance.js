@@ -13,7 +13,7 @@
   const read = (key) => { try { return window.localStorage.getItem(key); } catch (_) { return null; } };
   const write = (key, value) => { try { window.localStorage.setItem(key, value); } catch (_) {} };
   const reduced = () => root.dataset.motion === 'reduced';
-  const animatedAppearance = () => ['vault', 'p3r', 'p5r'].includes(root.dataset.appearance) &&
+  const animatedAppearance = () => ['vault', 'p3r', 'p5r', 'calm'].includes(root.dataset.appearance) &&
     !(['p3r', 'p5r'].includes(root.dataset.appearance) && read('steam-organizer-persona-paused') === 'true');
   const currentScene = () => document.querySelector('.p3r-scene');
   function resetScenes() {

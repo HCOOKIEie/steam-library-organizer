@@ -14,4 +14,4 @@ FIRST VIEWPORT: 272px black rule column, red poster composition with three stagg
 
 FORM: User-pinned P5R visual language; code-led alternate theme inside the established app. No competing direction round. seed: none (user-pinned).
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, docs/DESIGN.md, and every shipping raster carrying its provenance

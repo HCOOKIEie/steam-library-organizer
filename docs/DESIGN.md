@@ -352,3 +352,7 @@ Motion tools have 36px minimum targets. Pause persists under `steam-organizer-pe
 - **Don't** retain particle animation behind generated review or run it continuously while idle or hidden.
 - **Don't** promote tiny incidental labels into a reusable density standard.
 - **Don't** require external services or a Node runtime for the desktop interface, or introduce game logos or extracted game assets. Keep requested fan portraits locally bundled with provenance.
+
+### Calm alternate — v1.1.1
+
+The calm appearance now uses an ink / paper system with restrained acid green, an original interactive card composition, and finite layout transitions into review. See [the calm interface specification](calm-interface.md) for references, motion lifecycles, responsive behavior and validation. Existing Collection and Persona styles remain independent.

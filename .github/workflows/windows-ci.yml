@@ -87,7 +87,7 @@ jobs:
           --clean
           --distpath .ci-dist
           --workpath .ci-build
-          .build\SteamLibraryOrganizer.spec
+          scripts\SteamLibraryOrganizer.spec
 
       - name: Verify frozen runtime resources
         shell: pwsh
@@ -112,6 +112,8 @@ jobs:
             '_internal\steam_ui\vault.js',
             '_internal\steam_ui\persona-motion.js',
             '_internal\steam_ui\persona-motion.css',
+            '_internal\steam_ui\calm.css',
+            '_internal\steam_ui\calm.js',
             '_internal\steam_ui\art\p3r-profile.webp',
             '_internal\steam_ui\art\p5r-profile.webp',
             '_internal\steam_ui\vault.css',

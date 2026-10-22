@@ -123,6 +123,8 @@ class PreviewHandler(BaseHTTPRequestHandler):
                   "/vault.js": ("vault.js", "text/javascript"),
                   "/persona-motion.css": ("persona-motion.css", "text/css"),
                   "/persona-motion.js": ("persona-motion.js", "text/javascript"),
+                  "/calm.css": ("calm.css", "text/css"),
+                  "/calm.js": ("calm.js", "text/javascript"),
                   "/art/p3r-profile.webp": ("art/p3r-profile.webp", "image/webp"),
                   "/art/p5r-profile.webp": ("art/p5r-profile.webp", "image/webp"),
                   "/fonts/Anton-Regular.ttf": ("fonts/Anton-Regular.ttf", "font/ttf"),

@@ -14,4 +14,4 @@ FIRST VIEWPORT: A 272px rule column, full-stage black particle field behind a co
 
 FORM: User-pinned screenshot and locally inspected blinking-squares reference; independent code-led Canvas2D implementation with generated SVG fallback. No copied source or game assets. seed: none (user-pinned).
 
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, docs/DESIGN.md, and every shipping raster carrying its provenance

@@ -4,7 +4,7 @@
 
 默认流程是：读取数据 → 选择分类规则 → 审阅并勾选预览 → 退出 Steam 后备份写入。默认启用“首字母 + 游戏类型”，也支持条目形式、开发商、发行商、安装状态、最近游玩和游玩时长。
 
-当前源码为 **v1.1.0 开发版**，更新内容见 [CHANGELOG.md](CHANGELOG.md)。仓库根目录的 `SteamLibraryOrganizer.exe` 由发布脚本构建并同步，校验值见同目录 `.sha256` 文件；源码修改后需要重新打包。本地发布产物位于 `dist/release/`，GitHub Releases 则提供已发布版本。正式发布仍需按 `RELEASE_CHECKLIST.md` 完成实机验收。
+当前版本为 **v1.1.1**，更新内容见 [CHANGELOG.md](CHANGELOG.md)。Windows 程序统一从 GitHub Releases 下载；仓库保留源码，本地构建产物集中在 `dist/release/`。构建与验收步骤见 [发布检查清单](docs/RELEASE_CHECKLIST.md)。
 
 ## 下载
 
@@ -18,7 +18,7 @@
 
 ## 启动
 
-下载 portable ZIP 的用户应先完整解压，不要只把 EXE 单独移出文件夹；然后运行其中的 `SteamLibraryOrganizer.exe`。仓库中的 `启动Steam分类工具.bat` 主要给源码开发环境使用；`legacy/` 是早期实现的存档，不应作为正式入口，也不要用它处理真实 Steam 数据。
+下载 portable ZIP 的用户应先完整解压，不要只把 EXE 单独移出文件夹；然后运行其中的 `SteamLibraryOrganizer.exe`。仓库中的 `启动Steam分类工具.bat` 主要给源码开发环境使用。旧版入口已移除，历史实现仍可通过 Git 历史查看。
 
 正式版优先使用 WebView2 嵌入式桌面窗口：不会打开外部浏览器，也不会启动或监听 HTTP 服务。源码模式和正式 EXE 均包含 tkinter 兼容回退界面，因此 WebView2 启动失败时仍能完成核心操作。
 
@@ -32,7 +32,7 @@ py -3.13-64 -m venv .venv
 .\.venv\Scripts\python.exe steam_modern.py
 ```
 
-可复现发布构建使用 CPython 3.13.2 x64 的全新虚拟环境；精确版本见 `requirements-lock.txt`，发布流程见 `RELEASE_CHECKLIST.md`。不要从 Anaconda、系统全局 site-packages 或日常开发环境直接打包。
+可复现发布构建使用 CPython 3.13.2 x64 的全新虚拟环境；精确版本见 `requirements-lock.txt`，发布流程见 [发布检查清单](docs/RELEASE_CHECKLIST.md)。不要从 Anaconda、系统全局 site-packages 或日常开发环境直接打包。
 
 运行日志保存在 `%LOCALAPPDATA%\SteamLibraryOrganizer\steam_modern.log`。
 
@@ -61,12 +61,14 @@ py -3.13-64 -m venv .venv
 ### 无需 Steam 的界面预览
 
 ```powershell
-python scripts\preview_ui.py --export dist\SteamLibraryOrganizer-ui-preview.html
+python scripts\preview_ui.py --export dist\previews\SteamLibraryOrganizer-ui-preview.html
 ```
 
 双击导出的 HTML 即可离线体验主题、规则、搜索和勾选。页面明确标记“示例数据”，所有写入、恢复及系统操作都会拒绝执行。示例使用虚构账号和 24 个游戏条目；不读取真实游戏库。`--scenario running`、`empty`、`error`、`plan-error` 可导出对应状态。厂商门槛等真实分类行为以桌面版为准。
 
 也可运行 `python scripts\preview_ui.py --port 8761` 启动仅绑定 `127.0.0.1` 的开发预览服务。
+
+简约主题采用黑白与荧光绿工作台，支持卡片归位、鼠标阻尼视差、互动方格背景和预览切换动效。用 `python scripts/preview_ui.py --export dist/previews/Calm-preview.html --appearance calm` 导出体验；具体说明见 [简约主题设计](docs/calm-interface.md)。以上效果已包含在 v1.1.1 桌面版。
 
 ## 安全边界
 
@@ -84,7 +86,6 @@ python scripts\preview_ui.py --export dist\SteamLibraryOrganizer-ui-preview.html
 ## 项目结构
 
 ```text
-SteamLibraryOrganizer.exe  可直接运行的 Windows 桌面版
 steam_modern.py            WebView2 桌面外壳与受控 Python 接口
 steam_desktop.py           tkinter 兼容回退界面
 steam_settings.py          两套桌面界面共用的本机设置
@@ -94,8 +95,11 @@ steam_web.py               开发与回归用本地服务
 steam_ui/                  嵌入式 HTML/CSS/JavaScript 界面
 THIRD_PARTY_NOTICES.md     Uiverse 来源与第三方许可
 THIRD_PARTY_LICENSES/      发布包所含第三方组件的完整许可文本
-RELEASE_CHECKLIST.md       v1.1.0 可复现构建与发布检查清单
-legacy/                    早期实现，仅供追溯，请勿用于真实数据
+scripts/                   构建、校验与只读预览工具
+docs/                      设计、产品与发布文档
+tests/                     Python 与前端回归测试
+dist/release/              本地构建产物（不进入 Git）
+dist/previews/             本地界面预览（不进入 Git）
 ```
 
 `steam_appinfo_cache.json` 是从本机 Steam 缓存生成的加速文件；删除后会在下次扫描时重建。
@@ -115,15 +119,15 @@ Node.js 22 与 jsdom 仅用于开发期的前端回归测试，不会随桌面�
 
 发布要求完整回归测试全部通过。自动测试会覆盖临时测试数据上的写入与恢复；正式发布还应在隔离的测试账号/可还原数据上完成实机冒烟测试，不要直接拿主力收藏夹做首次验证。
 
-`v1.1.0` 的正式发布继续要求 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖；兼容回退界面支持选择并记住非默认 Steam 目录。支持范围仍是 Windows 10/11 x64，Windows EXE 尚未进行代码签名。
+`v1.1.1` 的正式发布继续要求 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖；兼容回退界面支持选择并记住非默认 Steam 目录。支持范围仍是 Windows 10/11 x64，Windows EXE 尚未进行代码签名。
 
 构建 Windows 发布包：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.1.0 -Layout Both
+powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.1.1 -Layout Both
 ```
 
-构建机还需安装 Node.js，用于在打包前检查内嵌界面的 JavaScript 语法。脚本会新建 `.venv-release`、安装 `requirements-lock.txt`、运行测试、编译检查 Python、检查 JavaScript、构建推荐的 onedir ZIP 与单文件备选、复制许可文件并生成 SHA-256；同时会删除旧版曾写在 `dist\SteamLibraryOrganizer.exe` 的歧义产物，正式上传只使用 `dist\release\`。发布前仍应检查构建日志与 PyInstaller TOC，确认路径不含 Anaconda、用户级 `site-packages` 或其他工作区。完整步骤见 `RELEASE_CHECKLIST.md`。
+构建机还需安装 Node.js，用于在打包前检查内嵌界面的 JavaScript 语法。脚本会新建 `.venv-release`、安装 `requirements-lock.txt`、运行测试、编译检查 Python、检查 JavaScript、构建推荐的 onedir ZIP 与单文件备选、复制许可文件并生成 SHA-256；同时会删除旧版曾写在 `dist\SteamLibraryOrganizer.exe` 的歧义产物，正式上传只使用 `dist\release\`。发布前仍应检查构建日志与 PyInstaller TOC，确认路径不含 Anaconda、用户级 `site-packages` 或其他工作区。完整步骤见 [发布检查清单](docs/RELEASE_CHECKLIST.md)。
 
 ## 许可状态
 

@@ -1,7 +1,7 @@
 # Third-Party Notices
 
 This file lists third-party software and UI references associated with the
-Steam Library Organizer v1.1.0 Windows x64 build. Exact Python package versions
+Steam Library Organizer v1.1.1 Windows x64 build. Exact Python package versions
 are pinned in `requirements-lock.txt`; verbatim license texts are stored under
 `THIRD_PARTY_LICENSES/` and must be shipped with the release archive.
 
@@ -15,6 +15,10 @@ source-available, not licensed as an OSI-approved open-source project.
 ### Collection particle field
 
 Collection's square-particle background is independently authored Canvas2D/SVG code. Its visual reference is the user's supplied Code-Codex blinking-squares screenshot and the local reference project. No code, fonts, artwork or assets from that project are distributed. The earlier Newsreader font and landscape relief have been removed.
+
+### Calm interface reference (unreleased source update)
+
+The redesigned Calm theme refers to OKX's official [interface update](https://www.okx.com/en-us/learn/okx-interface-update) for black/white visual hierarchy and restrained bright-green accents. Its layout, CSS card artwork and interaction code are independently authored. No OKX code, brand mark, screenshot, font or other asset is bundled. See `docs/calm-interface.md`.
 
 ## Release build toolchain
 

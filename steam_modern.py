@@ -37,7 +37,7 @@ from steam_web import Organizer
 
 
 APP_TITLE = "Steam 游戏库整理"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 MUTEX_NAME = r"Local\SteamLibraryOrganizer.Desktop.v1"
 LOGGER = logging.getLogger("steam_library_organizer.modern")
 T = TypeVar("T")

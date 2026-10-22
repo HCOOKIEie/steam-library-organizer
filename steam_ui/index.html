@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="p5r.css" />
   <link rel="stylesheet" href="vault.css" />
   <link rel="stylesheet" href="persona-motion.css" />
+  <link rel="stylesheet" href="calm.css" />
 </head>
 <body>
   <svg class="persona-clip-defs" width="0" height="0" aria-hidden="true"><defs><clipPath id="reload-menu-reveal" clipPathUnits="userSpaceOnUse"><circle id="reload-reveal-a" r="0"/><circle id="reload-reveal-b" r="0"/></clipPath></defs></svg>
@@ -74,7 +75,28 @@
       <div class="connection-card"><span class="connection-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7V5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v2"/></svg></span><div><span class="connection-label">STEAM 位置</span><button id="account-line" class="account-line" type="button" title="点击选择 Steam 安装目录">正在定位本机 Steam…</button></div><span aria-hidden="true">↗</span></div>
     </aside>
     <div class="stage">
+      <div class="calm-field calm-only" aria-hidden="true"><canvas id="calm-field-canvas"></canvas></div>
       <div class="vault-art vault-only" id="vault-art" aria-hidden="true"><div id="vault-art-fallback" class="vault-art-fallback"></div><canvas id="vault-canvas"></canvas></div>
+      <section class="calm-overview calm-only" aria-labelledby="calm-title">
+        <div class="calm-intro">
+          <div class="calm-eyebrow"><span class="calm-status-dot" aria-hidden="true"></span> LIBRARY / OVERVIEW</div>
+          <h2 id="calm-title">让收藏，<br><span>各就其位。</span></h2>
+          <p>选好分类规则，把时间留给游戏。</p>
+          <div class="calm-rule-summary"><span id="calm-rule-count">正在读取规则</span><span class="calm-rule-line" aria-hidden="true"></span><button id="calm-field-trigger" type="button" aria-label="播放背景波纹" title="移动鼠标探索背景，点击空白处或此按钮释放波纹">唤醒背景 ↗</button></div>
+        </div>
+        <div class="calm-visual">
+          <button type="button" class="calm-arrange" id="calm-arrange" aria-label="重播卡片归位动效" aria-describedby="calm-art-help" data-phase="settled">
+            <span class="calm-deck" aria-hidden="true">
+              <span class="calm-deck-guide"><span>A—Z</span><span>YOUR COLLECTION</span></span>
+              <span class="calm-card calm-card-a"><span class="calm-card-index">01 / A—Z</span><span class="calm-glyph calm-glyph-bars"><i></i><i></i><i></i></span><span class="calm-card-label">ADVENTURE<span>↗</span></span></span>
+              <span class="calm-card calm-card-b"><span class="calm-card-index">02 / RPG</span><span class="calm-glyph calm-glyph-orbit"><i></i><i></i></span><span class="calm-card-label">ANOTHER WORLD<span>↗</span></span></span>
+              <span class="calm-card calm-card-c"><span class="calm-card-index">03 / PLAY</span><span class="calm-glyph calm-glyph-cross"><i></i><i></i></span><span class="calm-card-label">NEXT CHAPTER<span>↗</span></span></span>
+              <span class="calm-deck-caption"><span class="calm-deck-tick">✓</span> A LITTLE ORDER. MORE PLAY.</span>
+            </span>
+          </button>
+          <span class="calm-art-help" id="calm-art-help"><span aria-hidden="true">↗</span> 移动探索 · 点击重排 <span class="calm-demo-label">分类演示</span></span>
+        </div>
+      </section>
       <header class="vault-header vault-only">
         <div><h2 id="vault-view-title">我的藏品</h2><p id="vault-view-copy">每一段冒险，都值得好好收藏。</p></div>
         <div class="vault-views" role="group" aria-label="工作区视图"><button id="vault-collection-btn" type="button" aria-pressed="true">藏品陈列</button><button id="vault-review-btn" type="button" aria-pressed="false" disabled>分类审阅<span id="vault-plan-count"></span></button></div>
@@ -141,5 +163,6 @@
   <script src="app.js"></script>
   <script src="vault.js"></script>
   <script src="persona-motion.js"></script>
+  <script src="calm.js"></script>
 </body>
 </html>
