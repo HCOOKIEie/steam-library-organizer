@@ -39,10 +39,11 @@ function applyTheme(theme, { persist = false, announce = false } = {}) {
   const nextTheme = theme === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = nextTheme;
   const isReload = document.documentElement.dataset.appearance === 'p3r';
-  const isTraces = document.documentElement.dataset.appearance === 'traces';
+  const isRoyal = document.documentElement.dataset.appearance === 'p5r';
+  const isVault = document.documentElement.dataset.appearance === 'vault';
   document.documentElement.style.colorScheme = isReload ? 'light' : nextTheme;
   const themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.content = isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isTraces ? (nextTheme === 'light' ? '#eaf1ef' : '#101f27') : (nextTheme === 'light' ? '#f8f9fb' : '#181a20');
+  if (themeColor) themeColor.content = isVault ? (nextTheme === 'light' ? '#eef2f1' : '#090d10') : isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isRoyal ? (nextTheme === 'light' ? '#e21d30' : '#c90d25') : (nextTheme === 'light' ? '#f5f5f7' : '#161618');
 
   if (persist) {
     try {
@@ -132,13 +133,13 @@ const state = {
 
 const MODE_CARDS = [
   { id: 'initial', title: '首字母', sub: '拼音 / A–Z', icon: 'type' },
-  { id: 'genre', title: '游戏类型', sub: '动作 · 角色扮演 · 独立', icon: 'tag' },
+  { id: 'genre', title: '游戏类型', sub: '动作 · 角色扮演', icon: 'tag' },
   { id: 'form', title: '条目形式', sub: '游戏 · DLC · 工具', icon: 'layers' },
-  { id: 'developer', title: '开发商', sub: '按开发团队分组', icon: 'build' },
-  { id: 'publisher', title: '发行商', sub: '按发行公司分组', icon: 'flag' },
+  { id: 'developer', title: '开发商', sub: '开发团队', icon: 'build' },
+  { id: 'publisher', title: '发行商', sub: '发行公司', icon: 'flag' },
   { id: 'state', title: '安装状态', sub: '已安装 · 未安装', icon: 'check' },
-  { id: 'recent', title: '最近游玩', sub: '按最后启动时间', icon: 'clock' },
-  { id: 'playtime', title: '游玩时长', sub: '按累计小时分组', icon: 'timer' },
+  { id: 'recent', title: '最近游玩', sub: '最后启动时间', icon: 'clock' },
+  { id: 'playtime', title: '游玩时长', sub: '累计小时', icon: 'timer' },
 ];
 
 const MODE_BY_ID = Object.fromEntries(MODE_CARDS.map((mode) => [mode.id, mode]));
@@ -169,7 +170,7 @@ function savePreferences() {
 }
 
 function syncRuleControls() {
-  $('mode-count').textContent = `${state.modes.length} 项已启用`;
+  $('mode-count').textContent = `已选 ${state.modes.length} 项`;
   document.querySelectorAll('.preset').forEach((button) => {
     const modes = RULE_PRESETS[button.dataset.preset];
     const enabled = modes.length === state.modes.length && modes.every((id) => state.modes.includes(id));
@@ -187,17 +188,17 @@ const DEFAULT_SCOPES = [
   {
     id: 'library',
     title: '游戏库',
-    description: 'Steam 库中可确认的游戏，推荐',
+    description: '已确认的库内游戏',
   },
   {
     id: 'games',
     title: '仅游戏',
-    description: '排除可识别的 DLC、工具与辅助项',
+    description: '排除已识别的 DLC、工具与辅助项',
   },
   {
     id: 'all',
     title: '全部条目',
-    description: '包含 DLC、工具、试玩和共享缓存',
+    description: '含 DLC、工具、试玩和共享缓存',
   },
 ];
 
@@ -340,7 +341,7 @@ function syncPlanFreshness(message = '') {
   syncRuleControls();
   if (!state.plan.length) {
     state.planFresh = false;
-    $('plan-status').textContent = state.scanReady ? '选择分类方式，然后生成安全预览。' : '扫描完成后即可生成预览。';
+    $('plan-status').textContent = state.scanReady ? '选好规则后生成预览。' : '扫描后可预览。';
     updateProgress();
     updateActionState();
     return;
@@ -352,13 +353,13 @@ function syncPlanFreshness(message = '') {
   $('stale-banner').hidden = state.planFresh;
   $('preview-badge').textContent = state.planCommitted ? '已写入' : (state.planFresh ? '待审阅' : '需要更新');
   if (state.planFresh) {
-    $('plan-status').textContent = '预览与当前设置一致，可以继续审阅。';
+    $('plan-status').textContent = '可检查、勾选分类。';
   } else {
     $('stale-banner').textContent = message || (state.planCommitted
       ? '这份预览已经执行过。再次写入前，请重新生成预览。'
       : '设置已改变。这份预览已过期，请重新生成后再写入。');
     $('plan-status').textContent = state.planCommitted
-      ? '操作已完成；如需再次整理，请重新生成预览。'
+      ? '已完成，再次整理需重新生成预览。'
       : '设置已改变，请重新生成预览。';
   }
   updateProgress();
@@ -506,15 +507,15 @@ function renderScanCounts() {
   $('stat-scope-label').textContent = scope?.title || '当前范围';
   $('stat-scope').textContent = formatNumber(total);
   $('stat-scope-note').textContent = state.scope === 'all' && auxiliary
-    ? `其中 ${formatNumber(auxiliary)} 个辅助条目`
-    : '将用于生成分类预览';
+    ? `含 ${formatNumber(auxiliary)} 个辅助条目`
+    : '当前整理范围';
   $('stat-games').textContent = formatNumber(games);
   $('stat-games-note').textContent = counts.library !== undefined
     ? `游戏库 ${formatNumber(counts.library)}`
-    : '具备可用名称的游戏';
+    : '名称已识别';
   $('stat-unresolved').textContent = formatNumber(unresolved);
   $('stat-unresolved-note').textContent = all
-    ? `占全部本地记录的 ${Math.min(100, (unresolved / all) * 100).toFixed(1)}%`
+    ? `占本地记录 ${Math.min(100, (unresolved / all) * 100).toFixed(1)}%`
     : '名称或资料不完整';
   $('stat-installed').textContent = formatNumber(installed);
 
@@ -523,10 +524,10 @@ function renderScanCounts() {
     ? state.server.scan_warnings.filter(Boolean)
     : [];
   $('quality-title').textContent = metadataError
-    ? 'Steam 元数据刷新失败，请重新扫描'
+    ? '游戏资料读取失败，请重新扫描'
     : (unresolved
-      ? `${formatNumber(total)} 个条目将进入当前范围，另有 ${formatNumber(unresolved)} 个资料不完整`
-      : `${formatNumber(total)} 个条目将进入当前范围`);
+      ? `${formatNumber(unresolved)} 个条目资料不完整`
+      : '游戏资料已就绪');
   const sources = sourceSummary(state.server.sources || counts.sources);
   $('quality-copy').textContent = [
     metadataError
@@ -534,9 +535,9 @@ function renderScanCounts() {
       : '',
     sources ? `来源：${sources}。` : '',
     unresolved ? (state.scope === 'all' ? '“全部条目”会纳入资料不完整项。' : '资料不完整项已从当前推荐范围排除。') : '',
-    auxiliary ? `另检测到 ${formatNumber(auxiliary)} 个 DLC、工具或辅助条目。` : '',
+    auxiliary ? `${formatNumber(auxiliary)} 个 DLC、工具或辅助条目。` : '',
     scanWarnings.join(' '),
-    '范围之间可能重叠，数字不能简单相加。',
+    '各范围可能重叠。',
   ].filter(Boolean).join(' ');
   $('quality-card').classList.toggle(
     'is-warning',
@@ -547,8 +548,8 @@ function renderScanCounts() {
   const managed = collections.filter((collection) => collection.ours).length;
   const preserved = collections.length - managed;
   $('safety-copy').textContent = managed || preserved
-    ? `当前有 ${formatNumber(managed)} 个自动分类；${formatNumber(preserved)} 个其他分类不会被替换。`
-    : '写入前会自动备份；其他 Steam 分类不会被替换。';
+    ? `${formatNumber(managed)} 个自动分类；保留 ${formatNumber(preserved)} 个其他分类。`
+    : '写入前自动备份，保留其他 Steam 分类。';
 }
 
 function renderState(data) {
@@ -584,9 +585,9 @@ function renderState(data) {
   renderScopes();
   renderScanCounts();
   if (!state.metadataReady) {
-    $('plan-status').textContent = '元数据尚未就绪；请点击“重新扫描”重试。';
+    $('plan-status').textContent = '游戏资料未就绪，请重新扫描。';
   } else if (!state.plan.length) {
-    $('plan-status').textContent = '规则只会在生成预览时应用。';
+    $('plan-status').textContent = '选好规则后生成预览。';
   }
   updateProgress();
   updateActionState();
@@ -753,7 +754,7 @@ function createGroup(group, groupIndex) {
   article.dataset.search = `${group.name || ''} ${group.bucket || ''} ${sample.join(' ')}`.toLocaleLowerCase('zh-CN');
   body.appendChild(make('p', 'sample-label', sample.length
     ? `示例 ${formatNumber(sample.length)} / ${formatNumber(group.count ?? group.appids?.length ?? sample.length)}`
-    : '暂无可显示的名称示例'));
+    : '暂无名称示例'));
   if (sample.length) {
     const chips = make('div', 'chips');
     sample.forEach((item) => chips.appendChild(make('span', 'chip', item)));
@@ -816,9 +817,10 @@ function renderGroups(groups) {
   state.selected = new Set(groups.map((group) => String(group.id)));
   const host = $('groups');
   host.replaceChildren();
+  $('preview-panel').classList.add('has-preview');
   $('preview-empty').hidden = groups.length > 0;
-  $('empty-title').textContent = '这个范围还没有可分类的条目';
-  $('empty-copy').textContent = '试试其他整理范围或分类方式，然后重新生成预览。';
+  $('empty-title').textContent = '没有可分类的条目';
+  $('empty-copy').textContent = '换个范围或分类方式再试。';
   $('preview-panel').classList.toggle('has-plan', groups.length > 0);
   if (!groups.length) {
     $('preview-panel').classList.remove('is-stale');
@@ -860,7 +862,7 @@ async function makePlan() {
   state.busy.plan = true;
   state.planConfig = null;
   state.planFresh = false;
-  $('plan-status').textContent = '正在根据当前范围生成预览…';
+  $('plan-status').textContent = '正在生成预览…';
   updateActionState();
   try {
     const data = await api('/api/plan', config);
@@ -870,6 +872,7 @@ async function makePlan() {
     state.planCommitted = false;
     state.planFresh = configsEqual(config, currentPlanConfig());
     state.planSummary = normalizeSummary(data.summary, data.groups);
+    window.dispatchEvent(new CustomEvent('organizer-preview-will-render'));
     renderGroups(data.groups);
     syncPlanFreshness();
     $('result-panel').hidden = true;
@@ -1225,14 +1228,14 @@ async function chooseSteamRoot() {
     state.selected.clear();
     $('groups').replaceChildren();
     $('preview-empty').hidden = false;
-    $('preview-panel').classList.remove('has-plan', 'is-stale');
+    $('preview-panel').classList.remove('has-plan', 'has-preview', 'is-stale');
     $('stale-banner').hidden = true;
     $('preview-stats').hidden = true;
     $('preview-warnings').hidden = true;
     $('preview-badge').textContent = '尚未生成';
-    $('preview-context').textContent = '先生成预览，确认满意后再写入 Steam。';
-    $('empty-title').textContent = '好分类，从一份预览开始。';
-    $('empty-copy').textContent = '在左侧选好分类方式，生成专属于你的整理方案。每个分类都可以检查、勾选，满意后再写入。';
+    $('preview-context').textContent = '确认分类后再写入 Steam。';
+    $('empty-title').textContent = '先看看整理结果';
+    $('empty-copy').textContent = '选择分类方式，再生成预览。';
     $('preview-search').value = '';
     filterPreview();
     $('result-panel').hidden = true;
@@ -1274,7 +1277,9 @@ function toggleMoreMenu() {
 function filterPreview() {
   const query = $('preview-search').value.trim().toLocaleLowerCase('zh-CN');
   document.querySelectorAll('.group').forEach((row) => {
-    row.dataset.filtered = String(Boolean(query && !row.dataset.search.includes(query)));
+    const filtered = Boolean(query && !row.dataset.search.includes(query));
+    row.dataset.filtered = String(filtered);
+    row.hidden = filtered;
   });
   document.querySelectorAll('.mode-section').forEach((section) => {
     const visible = [...section.querySelectorAll('.group')].some((row) => row.dataset.filtered !== 'true');
@@ -1300,6 +1305,7 @@ function selectVisibleGroups(checked) {
 }
 
 function updateActionState() {
+  window.dispatchEvent(new CustomEvent('organizer-state-change'));
   updateProgress();
   const anyBusy = Object.values(state.busy).some(Boolean);
   document.documentElement.dataset.activity = ['apply', 'restore', 'plan', 'scan', 'root'].find((key) => state.busy[key]) || 'idle';
@@ -1307,7 +1313,7 @@ function updateActionState() {
   const planButton = $('plan-btn');
   const applyButton = $('apply-btn');
   planButton.disabled = anyBusy || !state.scanReady || !state.metadataReady || state.modes.length === 0;
-  planButton.textContent = state.busy.plan ? '正在生成预览…' : (state.plan.length ? '重新生成预览' : '生成分类预览');
+  planButton.textContent = state.busy.plan ? '正在生成…' : (state.plan.length ? '更新预览' : '生成预览');
 
   let applyBlock = '';
   if (state.busy.apply) applyBlock = '正在写入';
@@ -1334,35 +1340,35 @@ function updateActionState() {
   else applyLabel.textContent = `备份并写入 ${formatNumber(summary.groups)} 个分类`;
 
   if (state.busy.scan) {
-    $('action-title').textContent = '正在扫描本机 Steam';
-    $('action-hint').textContent = '正在读取本地配置、库缓存和安装记录';
+    $('action-title').textContent = '正在扫描 Steam';
+    $('action-hint').textContent = '读取本地游戏记录';
   } else if (!state.scanReady) {
     $('action-title').textContent = '尚未连接 Steam';
-    $('action-hint').textContent = '重新扫描，或选择 Steam 安装目录';
+    $('action-hint').textContent = '重新扫描或选择安装目录';
   } else if (state.busy.plan) {
-    $('action-title').textContent = '正在生成安全预览';
-    $('action-hint').textContent = '正在按所选规则计算分类，不会改动 Steam';
+    $('action-title').textContent = '正在生成预览';
+    $('action-hint').textContent = '预览不会改动 Steam';
   } else if (!state.metadataReady) {
-    $('action-title').textContent = '游戏资料尚未就绪';
-    $('action-hint').textContent = '重新扫描后即可生成分类预览';
+    $('action-title').textContent = '游戏资料未就绪';
+    $('action-hint').textContent = '请重新扫描';
   } else if (!state.plan.length && state.planId) {
-    $('action-title').textContent = '当前没有可用分类';
-    $('action-hint').textContent = '调整整理范围或分类方式，然后重新生成';
+    $('action-title').textContent = '没有可用分类';
+    $('action-hint').textContent = '换个范围或规则再试';
   } else if (!state.plan.length) {
-    $('action-title').textContent = '数据已就绪';
-    $('action-hint').textContent = state.modes.length ? '检查左侧规则，然后生成分类预览' : '请至少选择一种分类方式';
+    $('action-title').textContent = '可以开始整理';
+    $('action-hint').textContent = state.modes.length ? '先预览，再写入' : '请至少选择一种分类方式';
   } else if (!state.planFresh) {
     $('action-title').textContent = '预览需要更新';
-    $('action-hint').textContent = '规则或数据已经变化，请重新生成预览';
+    $('action-hint').textContent = '规则或数据已改变，请重新生成';
   } else if (state.steamRunning === true) {
-    $('action-title').textContent = '预览已就绪 · 当前仅可预览';
-    $('action-hint').textContent = '完全退出 Steam 后即可备份并写入，当前可以继续检查分类';
+    $('action-title').textContent = '当前仅可预览';
+    $('action-hint').textContent = '完全退出 Steam 后即可备份并写入';
   } else if (applyBlock) {
     $('action-title').textContent = '预览暂不可写入';
     $('action-hint').textContent = applyBlock;
   } else {
-    $('action-title').textContent = '预览已就绪 · 可以安全写入';
-    $('action-hint').textContent = `将创建 ${formatNumber(summary.groups)} 个分类，整理 ${formatNumber(summary.uniqueApps)} 个唯一条目，共 ${formatNumber(summary.memberships)} 次归属`;
+    $('action-title').textContent = '分类已就绪';
+    $('action-hint').textContent = `${formatNumber(summary.groups)} 个分类 · ${formatNumber(summary.uniqueApps)} 个条目`;
   }
 
   $('restore-btn').disabled = anyBusy || !state.scanReady || state.steamRunning !== false;

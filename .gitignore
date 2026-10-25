@@ -21,7 +21,11 @@ steam_categories_preview.json
 *.bak
 *.tmp
 .build/*
-!.build/SteamLibraryOrganizer.spec
+/.ci-build/
+/.ci-dist/
+/SteamLibraryOrganizer.exe
+/SteamLibraryOrganizer.exe.sha256
 /videos/
 /release/
 /promotion/
+.impeccable/review/

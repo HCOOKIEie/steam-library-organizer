@@ -1,36 +1,23 @@
 # Third-Party Notices
 
 This file lists third-party software and UI references associated with the
-Steam Library Organizer v1.1.0 Windows x64 build. Exact Python package versions
+Steam Library Organizer v1.1.2 Windows x64 build. Exact Python package versions
 are pinned in `requirements-lock.txt`; verbatim license texts are stored under
 `THIRD_PARTY_LICENSES/` and must be shipped with the release archive.
 
-These notices apply only to the identified third-party components. They do not
-provide a license for this project's own source code. No project-level license
-has been selected at the time of this notice; the repository is currently
-source-available, not licensed as an OSI-approved open-source project.
+This project's own source code is licensed under the MIT License in `LICENSE`.
+The third-party components identified below remain under their respective
+licenses; the project license does not replace those terms or notices.
 
 ## Bundled runtime components
 
-| Component | Version | License | Source / full text |
-| --- | ---: | --- | --- |
-| CPython | 3.13.2 x64 | PSF License Version 2 and bundled notices | [Python](https://www.python.org/) · `THIRD_PARTY_LICENSES/CPython-3.13.2.txt` |
-| pypinyin | 0.55.0 | MIT | [Source](https://github.com/mozillazg/python-pinyin) · `THIRD_PARTY_LICENSES/pypinyin-0.55.0.txt` |
-| pywebview | 6.2.1 | BSD-3-Clause | [Source](https://github.com/r0x0r/pywebview) · `THIRD_PARTY_LICENSES/pywebview-6.2.1.txt` |
-| pythonnet | 3.2.0 | MIT | [Source](https://github.com/pythonnet/pythonnet) · `THIRD_PARTY_LICENSES/pythonnet-3.2.0.txt` |
-| clr-loader | 0.3.1 | MIT | [Source](https://github.com/pythonnet/clr-loader) · `THIRD_PARTY_LICENSES/clr-loader-0.3.1.txt` |
-| cffi | 2.1.1 | MIT-0 | [Source](https://github.com/python-cffi/cffi) · `THIRD_PARTY_LICENSES/cffi-2.1.1.txt` |
-| pycparser | 3.11 | BSD-3-Clause | [Source](https://github.com/eliben/pycparser) · `THIRD_PARTY_LICENSES/pycparser-3.11.txt` |
-| proxy_tools | 0.1.0 | BSD (upstream source notice) | [Source](https://github.com/jtushman/proxy_tools) · `THIRD_PARTY_LICENSES/proxy-tools-0.1.0.txt` |
-| bottle | 0.13.4 | MIT | [Source](https://github.com/bottlepy/bottle) · `THIRD_PARTY_LICENSES/bottle-0.13.4.txt` |
-| typing_extensions | 4.16.0 | PSF-2.0 | [Source](https://github.com/python/typing_extensions) · `THIRD_PARTY_LICENSES/typing-extensions-4.16.0.txt` |
-| Microsoft.Web.WebView2 SDK files | 1.0.3856.49 | BSD-3-Clause plus notices | [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) · `THIRD_PARTY_LICENSES/Microsoft.Web.WebView2-SDK-1.0.3856.49.txt` |
+### Collection particle field
 
-The SDK DLLs and loader above are bundled by pywebview. The Microsoft Edge
-WebView2 **Runtime** is not redistributed by this project and remains a
-separately installed Microsoft component. `proxy_tools` labels itself BSD in
-its source header and upstream license, despite its package metadata reporting
-MIT; this distribution retains the verbatim upstream license.
+Collection's square-particle background is independently authored Canvas2D/SVG code. Its visual reference is the user's supplied Code-Codex blinking-squares screenshot and the local reference project. No code, fonts, artwork or assets from that project are distributed. The earlier Newsreader font and landscape relief have been removed.
+
+### Calm interface reference (unreleased source update)
+
+The redesigned Calm theme refers to OKX's official [interface update](https://www.okx.com/en-us/learn/okx-interface-update) for black/white visual hierarchy and restrained bright-green accents. Its layout, CSS card artwork and interaction code are independently authored. No OKX code, brand mark, screenshot, font or other asset is bundled. See `docs/calm-interface.md`.
 
 ## Release build toolchain
 
@@ -55,9 +42,9 @@ The Node.js test harness uses jsdom 26.1.0 (MIT), pinned with its dependency
 graph in `package-lock.json`. These packages are development tools and are not
 bundled in the Windows application or offline HTML preview.
 
-## TRACES appearance
+## Historical TRACES appearance
 
-The optional TRACES appearance is an original local HTML/CSS/SVG implementation
+The retired TRACES appearance was an original local HTML/CSS/SVG implementation
 inspired by the geometric composition, coordinate lines and serif typography
 of Arknights' 众生行记 event interface. Visual reference:
 [UI / interaction / motion archive by 胖鱼鱼呀](https://www.bilibili.com/video/BV1WFkwBJEhR/).
@@ -70,9 +57,7 @@ community project is not affiliated with or endorsed by them.
 The optional RELOAD appearance is an original CSS layout inspired by the
 geometric typography and blue palette of Persona 3 Reload, with the user's
 [video reference](https://www.bilibili.com/video/BV1Xntq6hEvK/) as visual direction.
-It contains no character illustrations, game screenshots, downloaded game
-assets, proprietary fonts, or audio. Shapes are implemented in HTML/CSS/SVG;
-typefaces resolve to local system fonts.
+The profile cutout is an AI-generated fan illustration of Makoto Yuki, generated at the user's request with a user-supplied menu screenshot as the style reference. It is not official artwork. No extracted game assets, proprietary fonts, or audio are bundled. Layout and water animation are original HTML/CSS/Canvas2D. Display text uses bundled Anton under SIL OFL 1.1; interface text uses local system fonts.
 
 ## Historical Uiverse interaction references
 
@@ -135,3 +120,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+# Barlow Condensed
+
+The P5R-inspired appearance bundles Barlow Condensed Black Italic by Jeremy Tribby, licensed under the SIL Open Font License 1.1. Source: https://github.com/google/fonts/tree/main/ofl/barlowcondensed . The full license is included in `steam_ui/fonts/OFL-BarlowCondensed.txt`, `THIRD_PARTY_LICENSES/BarlowCondensed-OFL.txt`, and standalone exported HTML.
+
+P5R visual inspiration: https://persona.atlus.com/p5r/ . Official title artwork, logos, music and game fonts are not bundled. The Joker profile is an AI-generated fan illustration, not an official game asset. Persona characters belong to their respective rights holders; this project is not affiliated with or endorsed by ATLUS/SEGA. The theme's layout, paper cuts and transitions are original HTML/CSS. Generation prompts and provenance are recorded in `docs/persona-art-prompts.md`.
+
+
+## Anton display font
+
+The RELOAD homepage uses upright Anton Regular by The Anton Project Authors, under SIL Open Font License 1.1. Downloaded from the Google Fonts official repository: https://github.com/google/fonts/tree/main/ofl/anton . The complete license is included in `steam_ui/fonts/OFL-Anton.txt`, `THIRD_PARTY_LICENSES/Anton-OFL.txt`, and embedded in the standalone HTML and desktop page. It is not a proprietary Persona game font.
+
+
+P3R motion reference: John Persona, Pause Menu - Persona 3 Reload, https://www.youtube.com/watch?v=4d6x1CIgLSc . The recording was viewed to study circular scene reveals and underwater movement; no video, textures, models or code from the recording or third-party recreations are bundled. Local timing and implementation notes are in `docs/p3r-motion-reference.md`.

@@ -96,7 +96,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(payload)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'")
+        self.send_header("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'")
         self.end_headers()
         self.wfile.write(payload)
 
@@ -118,7 +118,17 @@ class PreviewHandler(BaseHTTPRequestHandler):
         assets = {"/": ("index.html", "text/html"), "/index.html": ("index.html", "text/html"),
                   "/styles.css": ("styles.css", "text/css"), "/app.js": ("app.js", "text/javascript"),
                   "/p3r.css": ("p3r.css", "text/css"), "/appearance.js": ("appearance.js", "text/javascript"),
-                  "/traces.css": ("traces.css", "text/css"),
+                  "/p5r.css": ("p5r.css", "text/css"),
+                  "/vault.css": ("vault.css", "text/css"),
+                  "/vault.js": ("vault.js", "text/javascript"),
+                  "/persona-motion.css": ("persona-motion.css", "text/css"),
+                  "/persona-motion.js": ("persona-motion.js", "text/javascript"),
+                  "/calm.css": ("calm.css", "text/css"),
+                  "/calm.js": ("calm.js", "text/javascript"),
+                  "/art/p3r-profile.webp": ("art/p3r-profile.webp", "image/webp"),
+                  "/art/p5r-profile.webp": ("art/p5r-profile.webp", "image/webp"),
+                  "/fonts/Anton-Regular.ttf": ("fonts/Anton-Regular.ttf", "font/ttf"),
+                  "/fonts/BarlowCondensed-BlackItalic.ttf": ("fonts/BarlowCondensed-BlackItalic.ttf", "font/ttf"),
                   "/theme-bootstrap.js": ("theme-bootstrap.js", "text/javascript")}
         if path not in assets:
             self.respond(404, {"error": "not found"})
@@ -127,7 +137,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         source = (PROJECT_ROOT / "steam_ui" / name).read_bytes()
         if name == "index.html":
             source = source.replace(b'id="demo-badge" class="demo-badge" hidden', b'id="demo-badge" class="demo-badge"')
-        self.respond(200, source, content_type + "; charset=utf-8")
+        self.respond(200, source, content_type if content_type.startswith(("font/", "image/")) else content_type + "; charset=utf-8")
 
     def do_POST(self):
         if not self.valid_origin() or self.headers.get("X-Steam-Organizer-Token") != self.server.token:
@@ -164,9 +174,10 @@ def main():
     parser.add_argument("--port", type=int, default=8761)
     parser.add_argument("--scenario", choices=["ready", "running", "empty", "error", "plan-error"], default="ready")
     parser.add_argument("--export", type=Path, metavar="HTML", help="Export a standalone offline preview instead of starting a server")
+    parser.add_argument("--appearance", choices=["vault", "p3r", "p5r", "calm"], default="vault", help="Default appearance of an exported preview; saved preferences still win")
     args = parser.parse_args()
     if args.export:
-        export_preview(args.export, args.scenario)
+        export_preview(args.export, args.scenario, args.appearance)
         return
     server = ThreadingHTTPServer(("127.0.0.1", args.port), PreviewHandler)
     server.scenario = args.scenario
@@ -180,7 +191,7 @@ def main():
         server.server_close()
 
 
-def export_preview(destination: Path, scenario: str = "ready") -> None:
+def export_preview(destination: Path, scenario: str = "ready", appearance: str = "vault") -> None:
     """Inline the production UI and a read-only bridge for local visual review."""
     from steam_modern import load_ui_html
 
@@ -216,6 +227,9 @@ def export_preview(destination: Path, scenario: str = "ready") -> None:
 })();
 </script>""".replace("FIXTURES", fixtures)
     html = load_ui_html().replace("</head>", bridge + "\n</head>", 1)
+    if appearance not in {"vault", "p3r", "p5r", "calm"}:
+        raise ValueError("Unknown preview appearance")
+    html = html.replace("let appearance = 'vault';", f"let appearance = '{appearance}';", 1)
     html = html.replace('id="demo-badge" class="demo-badge" hidden', 'id="demo-badge" class="demo-badge"')
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(html, encoding="utf-8")

@@ -12,6 +12,7 @@ is launched as an offline compatibility fallback.
 from __future__ import annotations
 
 import ctypes
+import base64
 import importlib
 import logging
 import os
@@ -36,7 +37,7 @@ from steam_web import Organizer
 
 
 APP_TITLE = "Steam 游戏库整理"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.2"
 MUTEX_NAME = r"Local\SteamLibraryOrganizer.Desktop.v1"
 LOGGER = logging.getLogger("steam_library_organizer.modern")
 T = TypeVar("T")
@@ -302,6 +303,20 @@ def load_ui_html() -> str:
         if not _is_local_asset(reference):
             return match.group(0)
         css = _safe_ui_asset(ui_root, reference).read_text(encoding="utf-8")
+        font_licenses = {"p5r.css": "fonts/OFL-BarlowCondensed.txt", "p3r.css": "fonts/OFL-Anton.txt"}
+        if reference in font_licenses:
+            license_text = _safe_ui_asset(ui_root, font_licenses[reference]).read_text(encoding="utf-8")
+            css = "/* Font license (also applies to this embedded copy):\n" + license_text.replace("*/", "* /") + "\n*/\n" + css
+        # The desktop document has no base URL. Embed the local font and the
+        # two generated character cutouts, using the same traversal guard.
+        def inline_binary(asset_match: re.Match[str]) -> str:
+            asset_reference = asset_match.group(1)
+            mime = {".ttf": "font/ttf", ".webp": "image/webp"}.get(Path(asset_reference).suffix.lower())
+            if not _is_local_asset(asset_reference) or not mime:
+                return asset_match.group(0)
+            payload = _safe_ui_asset(ui_root, asset_reference).read_bytes()
+            return 'url("data:' + mime + ';base64,' + base64.b64encode(payload).decode("ascii") + '")'
+        css = re.sub(r"url\(['\"]?([^)'\"\s]+\.(?:ttf|webp))['\"]?\)", inline_binary, css)
         css = re.sub(r"</style", r"<\\/style", css, flags=re.IGNORECASE)
         return f'<style data-source="{reference}">\n{css}\n</style>'
 

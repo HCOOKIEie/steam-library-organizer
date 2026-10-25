@@ -4,7 +4,7 @@
 
 默认流程是：读取数据 → 选择分类规则 → 审阅并勾选预览 → 退出 Steam 后备份写入。默认启用“首字母 + 游戏类型”，也支持条目形式、开发商、发行商、安装状态、最近游玩和游玩时长。
 
-当前源码正在开发 **v1.1.0**，更新内容见 [CHANGELOG.md](CHANGELOG.md)。仓库中已有的 EXE 不会随源码修改自动更新；体验本次修改请从源码运行，或先使用下面的离线界面预览。正式发布仍需按 `RELEASE_CHECKLIST.md` 完成打包和实机验收。
+当前版本为 **v1.1.2**，更新内容见 [CHANGELOG.md](CHANGELOG.md)。旧版 v1.1.0 / v1.1.1 已撤回。Windows 程序统一从 GitHub Releases 下载；仓库保留源码，本地构建产物集中在 `dist/release/`。构建与验收步骤见 [发布检查清单](docs/RELEASE_CHECKLIST.md)。
 
 ## 下载
 
@@ -18,7 +18,7 @@
 
 ## 启动
 
-下载 portable ZIP 的用户应先完整解压，不要只把 EXE 单独移出文件夹；然后运行其中的 `SteamLibraryOrganizer.exe`。仓库中的 `启动Steam分类工具.bat` 主要给源码开发环境使用；`legacy/` 是早期实现的存档，不应作为正式入口，也不要用它处理真实 Steam 数据。
+下载 portable ZIP 的用户应先完整解压，不要只把 EXE 单独移出文件夹；然后运行其中的 `SteamLibraryOrganizer.exe`。仓库中的 `启动Steam分类工具.bat` 主要给源码开发环境使用。旧版入口已移除，历史实现仍可通过 Git 历史查看。
 
 正式版优先使用 WebView2 嵌入式桌面窗口：不会打开外部浏览器，也不会启动或监听 HTTP 服务。源码模式和正式 EXE 均包含 tkinter 兼容回退界面，因此 WebView2 启动失败时仍能完成核心操作。
 
@@ -32,21 +32,25 @@ py -3.13-64 -m venv .venv
 .\.venv\Scripts\python.exe steam_modern.py
 ```
 
-可复现发布构建使用 CPython 3.13.2 x64 的全新虚拟环境；精确版本见 `requirements-lock.txt`，发布流程见 `RELEASE_CHECKLIST.md`。不要从 Anaconda、系统全局 site-packages 或日常开发环境直接打包。
+可复现发布构建使用 CPython 3.13.2 x64 的全新虚拟环境；精确版本见 `requirements-lock.txt`，发布流程见 [发布检查清单](docs/RELEASE_CHECKLIST.md)。不要从 Anaconda、系统全局 site-packages 或日常开发环境直接打包。
 
 运行日志保存在 `%LOCALAPPDATA%\SteamLibraryOrganizer\steam_modern.log`。
 
 ## 新桌面界面
 
-- 默认提供 **RELOAD 蓝调**：P3R 风格启发的海蓝色平面设计，以粗体斜排字、斜切色块、圆弧轨道和细线构图呈现。全部由本地 HTML/CSS/SVG 绘制，不使用人物或游戏美术资源。
-- 新增 **行记 TRACES**：《明日方舟·众生行记》设计语言启发的青白 / 深青外观，以衬线排版、钴蓝坐标轴、环形刻度、几何星仪和黑白索引条呈现。纯 HTML/CSS/SVG 绘制，不含人物。
-- 顶栏提供 **RELOAD / 行记 / 简约** 三种外观；界面风格会被记住，切换不清空规则、搜索或预览勾选。
+- 源码与本地预览的默认外观 **光域** 提供棱阵 / 游流 / 回响三种原创空间：立体三角切面、12,000 点空间流与连续驻波网格。背景覆盖窗口，支持鼠标局部抬升、点击 / 键盘波动、暂停及静态回退；选择会被记住，审阅时停帧。这些场景已纳入 v1.1.2 EXE 和便携包。详见 [光域设计](docs/lightfield-interface.md)。
+- “光域 / 分类预览”切换保留规则、搜索和勾选；生成预览后进入完整审阅区。所有现有分类、备份、写入及恢复保护继续生效。
+- 新主题不使用远程字体、游戏封面服务或前端运行依赖。光域画面由本地代码生成，不代表用户游戏库中的真实游戏封面。
+- 保留 **RELOAD 蓝调**：P3R 风格启发的海蓝色平面设计，配蓝白色块概括的主角侧颜、缓慢浮动和大块水面折光；标题采用离线 Anton 直立粗体，配坐标及纵向大字。
+- **P5R 红黑** 替代原行记主题：红黑与纸白拼贴、离线 Barlow Condensed 斜体大字、斜切选中态，配告示卡、漫画星形、速度线和顶部字条。生成预览后，首屏海报让位于完整分类审阅区；配黑白红概括的 Joker 侧颜，不含提取的游戏素材或音乐。
+- 顶栏提供 **光域 / RELOAD / P5R / 简约** 四种外观；界面风格会被记住，切换不清空规则、搜索或预览勾选。已有用户保存的外观偏好继续保留，原行记偏好自动迁移至 P5R。
 - RELOAD 包含约 720ms 的有限入场转场、菜单悬停与选中反馈、约 480ms 的预览切入和分组错峰展开。视差仅作用于装饰层，不移动正文或控件。
-- 行记包含约 760ms 的圆环展开转场、刻度慢转、规则悬停及预览错峰浮现；装饰图形不接收鼠标或键盘输入。两种设计外观均支持亮色与深色。
+- P3R 参考原版菜单实录，点击人物或重播时由两个错峰展开的圆形窗口显示首页画面，水光贯穿标题与人物区域；P5R 使用黑白漫画星形冲击与速度切口，配海报翻入和轻微视差。特效限于首页画面，不覆盖分类文字、统计和按钮。首页提供“重播动效 / 暂停动效”，暂停偏好会保存。参考与实现区别见 [P3R 动效记录](docs/p3r-motion-reference.md)。
+- P3R 水光在画面可见时以约 30fps 缓慢运行，P5R 互动动效在闲置后停止；两套主题离屏或窗口隐藏时停止；生成分类预览后隐藏背景画布和动效控制，保留完整审阅空间。始终遵循系统和应用的减少动效设置。侧颜为 AI 生成的同人插画，离线内嵌，生成提示见 `docs/persona-art-prompts.md`。
 - “更多操作 → 减少动态效果”可以关闭动画与视差，也始终遵循系统减少动态效果设置；没有界面音效或自动播放音频。
 - 双栏工作台：左侧设置范围与规则，右侧查看统计、预览和操作结果。
 - 支持跟随系统的亮色/深色主题，也可在界面中手动切换并记住选择。
-- 原生 Windows 标题栏随界面主题切换；使用系统字体、本地矢量图形和轻量过渡。
+- 原生 Windows 标题栏随界面主题切换；使用系统控件字体、本地展示字体、矢量图形和轻量过渡。
 - 提供“推荐 / 轻量整理 / 游玩习惯”三组预设，自动记住分类方式、范围、名称语言和厂商门槛。
 - 支持搜索分类或已展示的示例游戏；搜索时全选、取消及分组勾选只作用于匹配结果。
 - 连接失败、空预览和搜索无结果都有明确说明；重新扫描及生成失败后会阻止旧预览写入。
@@ -57,12 +61,14 @@ py -3.13-64 -m venv .venv
 ### 无需 Steam 的界面预览
 
 ```powershell
-python scripts\preview_ui.py --export dist\SteamLibraryOrganizer-ui-preview.html
+python scripts\preview_ui.py --export dist\previews\SteamLibraryOrganizer-ui-preview.html
 ```
 
 双击导出的 HTML 即可离线体验主题、规则、搜索和勾选。页面明确标记“示例数据”，所有写入、恢复及系统操作都会拒绝执行。示例使用虚构账号和 24 个游戏条目；不读取真实游戏库。`--scenario running`、`empty`、`error`、`plan-error` 可导出对应状态。厂商门槛等真实分类行为以桌面版为准。
 
 也可运行 `python scripts\preview_ui.py --port 8761` 启动仅绑定 `127.0.0.1` 的开发预览服务。
+
+简约采用白灰 / 灰黑表面与蓝色操作强调，精简重复说明，移除卡片演示和背景 Canvas。动效集中在选中滑块、按钮按压和预览过渡，支持中途改向、闲置停帧与减少动态效果。用 `python scripts/preview_ui.py --export dist/previews/Calm-preview.html --appearance calm` 导出体验，具体说明见 [简约主题设计](docs/calm-interface.md)。这轮改版已纳入 v1.1.2 桌面版。
 
 ## 安全边界
 
@@ -80,7 +86,6 @@ python scripts\preview_ui.py --export dist\SteamLibraryOrganizer-ui-preview.html
 ## 项目结构
 
 ```text
-SteamLibraryOrganizer.exe  可直接运行的 Windows 桌面版
 steam_modern.py            WebView2 桌面外壳与受控 Python 接口
 steam_desktop.py           tkinter 兼容回退界面
 steam_settings.py          两套桌面界面共用的本机设置
@@ -90,8 +95,11 @@ steam_web.py               开发与回归用本地服务
 steam_ui/                  嵌入式 HTML/CSS/JavaScript 界面
 THIRD_PARTY_NOTICES.md     Uiverse 来源与第三方许可
 THIRD_PARTY_LICENSES/      发布包所含第三方组件的完整许可文本
-RELEASE_CHECKLIST.md       v1.1.0 可复现构建与发布检查清单
-legacy/                    早期实现，仅供追溯，请勿用于真实数据
+scripts/                   构建、校验与只读预览工具
+docs/                      设计、产品与发布文档
+tests/                     Python 与前端回归测试
+dist/release/              本地构建产物（不进入 Git）
+dist/previews/             本地界面预览（不进入 Git）
 ```
 
 `steam_appinfo_cache.json` 是从本机 Steam 缓存生成的加速文件；删除后会在下次扫描时重建。
@@ -111,16 +119,16 @@ Node.js 22 与 jsdom 仅用于开发期的前端回归测试，不会随桌面�
 
 发布要求完整回归测试全部通过。自动测试会覆盖临时测试数据上的写入与恢复；正式发布还应在隔离的测试账号/可还原数据上完成实机冒烟测试，不要直接拿主力收藏夹做首次验证。
 
-`v1.1.0` 的正式发布继续要求 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖；兼容回退界面支持选择并记住非默认 Steam 目录。支持范围仍是 Windows 10/11 x64，Windows EXE 尚未进行代码签名。
+`v1.1.2` 的正式发布继续要求 CPython 3.13.2 x64 纯净虚拟环境和锁定依赖；兼容回退界面支持选择并记住非默认 Steam 目录。支持范围仍是 Windows 10/11 x64，Windows EXE 尚未进行代码签名。
 
 构建 Windows 发布包：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.1.0 -Layout Both
+powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.1.2 -Layout Both
 ```
 
-构建机还需安装 Node.js，用于在打包前检查内嵌界面的 JavaScript 语法。脚本会新建 `.venv-release`、安装 `requirements-lock.txt`、运行测试、编译检查 Python、检查 JavaScript、构建推荐的 onedir ZIP 与单文件备选、复制许可文件并生成 SHA-256；同时会删除旧版曾写在 `dist\SteamLibraryOrganizer.exe` 的歧义产物，正式上传只使用 `dist\release\`。发布前仍应检查构建日志与 PyInstaller TOC，确认路径不含 Anaconda、用户级 `site-packages` 或其他工作区。完整步骤见 `RELEASE_CHECKLIST.md`。
+构建机还需安装 Node.js，用于在打包前检查内嵌界面的 JavaScript 语法。脚本会新建 `.venv-release`、安装 `requirements-lock.txt`、运行测试、编译检查 Python、检查 JavaScript、构建推荐的 onedir ZIP 与单文件备选、复制许可文件并生成 SHA-256；同时会删除旧版曾写在 `dist\SteamLibraryOrganizer.exe` 的歧义产物，正式上传只使用 `dist\release\`。发布前仍应检查构建日志与 PyInstaller TOC，确认路径不含 Anaconda、用户级 `site-packages` 或其他工作区。完整步骤见 [发布检查清单](docs/RELEASE_CHECKLIST.md)。
 
-## 许可状态
+## 开源许可
 
-依赖和界面参考素材的许可见 `THIRD_PARTY_NOTICES.md` 与 `THIRD_PARTY_LICENSES/`。仓库目前尚未选择项目级 `LICENSE`，因此当前状态是 **source-available（源码公开可查看）**，并非已经采用 OSI 认可许可证的正式开源项目。在项目级许可证确定前，不应将本项目描述为已采用 MIT、Apache-2.0、GPL 等许可证。
+本项目采用 [MIT 许可证](LICENSE)。第三方依赖、字体与素材仍遵循各自的许可证，完整声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 与 `THIRD_PARTY_LICENSES/`。

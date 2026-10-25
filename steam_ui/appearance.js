@@ -13,10 +13,11 @@
   const read = (key) => { try { return window.localStorage.getItem(key); } catch (_) { return null; } };
   const write = (key, value) => { try { window.localStorage.setItem(key, value); } catch (_) {} };
   const reduced = () => root.dataset.motion === 'reduced';
-  const animatedAppearance = () => ['p3r', 'traces'].includes(root.dataset.appearance);
-  const currentScene = () => document.querySelector(root.dataset.appearance === 'traces' ? '.traces-scene' : '.p3r-scene');
+  const animatedAppearance = () => ['vault', 'p3r', 'p5r'].includes(root.dataset.appearance) &&
+    !(['p3r', 'p5r'].includes(root.dataset.appearance) && read('steam-organizer-persona-paused') === 'true');
+  const currentScene = () => document.querySelector('.p3r-scene');
   function resetScenes() {
-    document.querySelectorAll('.p3r-scene, .traces-scene').forEach(scene => {
+    document.querySelectorAll('.p3r-scene').forEach(scene => {
       scene.style.removeProperty('--pointer-x');
       scene.style.removeProperty('--pointer-y');
     });
@@ -53,7 +54,7 @@
   }
 
   function setAppearance(value, persist = true) {
-    if (!['p3r', 'calm', 'traces'].includes(value)) return;
+    if (!['vault', 'p3r', 'calm', 'p5r'].includes(value)) return;
     const changed = root.dataset.appearance !== value;
     root.dataset.appearance = value;
     if (changed) {
@@ -82,7 +83,7 @@
     if (initialized) return;
     initialized = true;
     syncMotion();
-    setAppearance(root.dataset.appearance || 'p3r', false);
+    setAppearance(root.dataset.appearance || 'vault', false);
     document.querySelectorAll('.stats article').forEach((article, index) => article.style.setProperty('--item-index', String(index)));
     document.querySelectorAll('button[data-appearance]').forEach((button) => {
       button.addEventListener('click', () => setAppearance(button.dataset.appearance));
@@ -95,7 +96,7 @@
     window.addEventListener('organizer-preview-ready', revealPreview);
     const stage = document.querySelector('.stage');
     stage?.addEventListener('pointermove', (event) => {
-      if (!animatedAppearance() || reduced() || !pointerQuery.matches) return;
+      if (root.dataset.appearance !== 'p3r' || reduced() || !pointerQuery.matches) return;
       const bounds = stage.getBoundingClientRect();
       pointerX = ((event.clientX - bounds.left) / Math.max(bounds.width, 1) - .5) * 9;
       pointerY = ((event.clientY - bounds.top) / Math.max(bounds.height, 1) - .5) * 7;

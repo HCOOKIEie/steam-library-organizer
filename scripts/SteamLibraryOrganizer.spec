@@ -26,7 +26,7 @@ if BUILD_MODE not in {"onefile", "onedir"}:
 
 ENTRY_POINT = PROJECT_ROOT / "steam_modern.py"
 UI_ROOT = PROJECT_ROOT / "steam_ui"
-UI_FILES = ("index.html", "styles.css", "p3r.css", "traces.css", "theme-bootstrap.js", "appearance.js", "app.js")
+UI_FILES = ("index.html", "styles.css", "p3r.css", "p5r.css", "vault.css", "theme-bootstrap.js", "appearance.js", "app.js", "vault.js", "persona-motion.css", "persona-motion.js", "calm.css", "calm.js", "art/p3r-profile.webp", "art/p5r-profile.webp", "fonts/BarlowCondensed-BlackItalic.ttf", "fonts/OFL-BarlowCondensed.txt", "fonts/Anton-Regular.ttf", "fonts/OFL-Anton.txt")
 
 required_paths = [ENTRY_POINT, VERSION_FILE]
 required_paths.extend(UI_ROOT / name for name in UI_FILES)
@@ -38,7 +38,7 @@ a = Analysis(
     [str(ENTRY_POINT)],
     pathex=[str(PROJECT_ROOT)],
     binaries=[],
-    datas=[(str(UI_ROOT / name), "steam_ui") for name in UI_FILES],
+    datas=[(str(UI_ROOT / name), str(Path("steam_ui") / Path(name).parent)) for name in UI_FILES],
     hiddenimports=[
         # pywebview chooses its Windows backend dynamically.
         "webview.platforms.winforms",

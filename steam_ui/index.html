@@ -9,20 +9,25 @@
   <title>Steam 游戏库整理</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="p3r.css" />
-  <link rel="stylesheet" href="traces.css" />
+  <link rel="stylesheet" href="p5r.css" />
+  <link rel="stylesheet" href="vault.css" />
+  <link rel="stylesheet" href="persona-motion.css" />
+  <link rel="stylesheet" href="calm.css" />
 </head>
 <body>
+  <svg class="persona-clip-defs" width="0" height="0" aria-hidden="true"><defs><clipPath id="reload-menu-reveal" clipPathUnits="userSpaceOnUse"><circle id="reload-reveal-a" r="0"/><circle id="reload-reveal-b" r="0"/></clipPath></defs></svg>
   <a class="skip-link" href="#workspace">跳到主要工作区</a>
+  <div class="vault-art vault-only" id="vault-art" aria-hidden="true"><div id="vault-art-fallback" class="vault-art-fallback"></div><canvas id="vault-canvas"></canvas></div>
   <div class="p3r-backdrop p3r-only" aria-hidden="true"><span class="backdrop-disc"></span><span class="backdrop-word">RE:LOAD</span><span class="backdrop-stripe"></span></div>
   <div class="appearance-wipe" id="appearance-wipe" aria-hidden="true"><span></span><span></span><strong>YOUR NEXT PLAY.</strong></div>
-  <div class="traces-transition traces-only" aria-hidden="true"><span></span><i></i><b>THE ARCHIVE / 藏品行记</b></div>
+  <div class="p5r-transition p5r-only" aria-hidden="true"><span></span><span></span></div>
   <header class="topbar" id="page-header">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 28 28"><rect x="5" y="7" width="5" height="15" rx="1.5"/><rect x="12" y="4" width="5" height="18" rx="1.5"/><path d="m20 8 4-1 4 14-4 1z"/></svg></span>
-      <div class="brand-text"><h1>游戏库整理<span class="version-badge">Steam</span></h1><span class="brand-subtitle">A little order. More play.</span></div>
+      <div class="brand-text"><h1>游戏库整理<span class="version-badge">Steam</span></h1></div>
     </div>
     <div class="topbar-actions">
-      <div class="appearance-switch" role="group" aria-label="界面风格"><button type="button" data-appearance="p3r" aria-pressed="true" aria-label="P3R 风格">RELOAD<span>蓝调</span></button><button type="button" data-appearance="traces" aria-pressed="false" aria-label="众生行记风格">行记<span>TRACES</span></button><button type="button" data-appearance="calm" aria-pressed="false" aria-label="简约风格">简约</button></div>
+      <div class="appearance-switch" role="group" aria-label="界面风格"><button type="button" data-appearance="vault" aria-pressed="true" aria-label="光域风格">光域</button><button type="button" data-appearance="p3r" aria-pressed="false" aria-label="P3R 风格">RELOAD<span>蓝调</span></button><button type="button" data-appearance="p5r" aria-pressed="false" aria-label="P5R 风格">P5R<span>红黑</span></button><button type="button" data-appearance="calm" aria-pressed="false" aria-label="简约风格">简约</button></div>
       <span id="demo-badge" class="demo-badge" hidden>示例数据 · 不会写入</span>
       <span id="steam-pill" class="pill pill-wait" role="status"><span class="pill-dot" aria-hidden="true"></span><span class="pill-label">正在连接 Steam</span></span>
       <span class="toolbar-divider" aria-hidden="true"></span>
@@ -54,14 +59,14 @@
   </nav>
   <main class="workspace" id="workspace">
     <aside class="control-pane" aria-label="数据与分类规则">
-      <div class="pane-heading"><h2>整理设置</h2><span class="autosave-note">自动记住偏好</span></div>
+      <div class="pane-heading"><h2>整理设置</h2></div>
       <section class="control-section data-section" aria-labelledby="data-title">
         <div class="section-title-row"><h3 id="data-title">整理范围</h3><span id="scan-indicator" class="scan-indicator" aria-hidden="true"></span></div>
         <fieldset class="scope-fieldset"><legend class="sr-only">选择整理范围</legend><div class="scope-options" id="scopes"></div></fieldset>
       </section>
       <section class="control-section rules-section" aria-labelledby="rules-title">
-        <div class="section-title-row"><h3 id="rules-title">分类方式</h3><span id="mode-count" class="section-note">2 项已启用</span></div>
-        <p class="section-description">自由组合，一个游戏可属于多个分类。</p>
+        <div class="section-title-row"><h3 id="rules-title">分类方式</h3><span id="mode-count" class="section-note">已选 2 项</span></div>
+
         <div class="presets" role="group" aria-label="快速选择分类规则"><button class="preset is-on" type="button" data-preset="recommended" aria-pressed="true">推荐</button><button class="preset" type="button" data-preset="simple" aria-pressed="false">轻量整理</button><button class="preset" type="button" data-preset="habits" aria-pressed="false">游玩习惯</button></div>
         <div class="modes" id="modes" aria-label="分类维度"></div>
         <div class="company-options" id="company-options" hidden><label for="developer-min">厂商最少游戏数</label><div class="stepper"><button class="step-btn" data-step="-1" type="button" aria-label="减少厂商分组门槛">−</button><input id="developer-min" type="number" min="1" max="100" value="3" inputmode="numeric" /><button class="step-btn" data-step="1" type="button" aria-label="增加厂商分组门槛">+</button></div></div>
@@ -71,20 +76,52 @@
       <div class="connection-card"><span class="connection-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 7V5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v2"/></svg></span><div><span class="connection-label">STEAM 位置</span><button id="account-line" class="account-line" type="button" title="点击选择 Steam 安装目录">正在定位本机 Steam…</button></div><span aria-hidden="true">↗</span></div>
     </aside>
     <div class="stage">
-      <div class="traces-scene traces-only" aria-hidden="true">
-        <span class="traces-axis">Y / 01</span><span class="traces-coordinate">X : 0.00<br />Y : INFINITY</span>
-        <div class="traces-orbit"><span class="traces-ticks"></span><span class="traces-orbit-label">COLLECTION · MEMORY · DISCOVERY</span><svg viewBox="0 0 320 380"><g class="traces-construction"><circle cx="160" cy="190" r="130"/><circle cx="160" cy="190" r="107"/><ellipse cx="160" cy="190" rx="56" ry="130"/><path d="M160 18v344M17 190h286M160 60 273 255H47Z M160 320 47 125h226Z"/><path d="m152 26 8-14 8 14m-16 328 8 14 8-14M29 182l-14 8 14 8m262-16 14 8-14 8"/></g><g class="traces-seal"><path d="m160 133 49 57-49 57-49-57Z"/><circle cx="160" cy="190" r="29"/><path d="M145 190h30m-15-15v30"/></g><g class="traces-nodes"><circle cx="160" cy="60" r="4"/><circle cx="47" cy="255" r="4"/><circle cx="273" cy="255" r="4"/></g></svg><span class="traces-orbit-index">I</span></div>
-        <div class="traces-monument"><span></span><span></span><span></span></div>
-        <span class="traces-motto">万千收藏<br /><em>各有归处。</em></span><span class="traces-side-note">A PERSONAL ATLAS OF PLAY<br />LOCAL ARCHIVE / VOL. 01</span>
+
+      <header class="calm-overview calm-only"><h2 id="calm-title">游戏库</h2><svg class="calm-library-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="5" height="15" rx="1.5"/><rect x="10" y="3" width="5" height="17" rx="1.5"/><path d="m18 6 3 13"/></svg></header>
+      <header class="vault-header vault-only">
+        <div><h2 id="vault-view-title">游戏库</h2><p id="vault-view-copy"></p></div>
+        <div class="vault-views" role="group" aria-label="工作区视图"><button id="vault-collection-btn" type="button" aria-pressed="true">光域</button><button id="vault-review-btn" type="button" aria-pressed="false" disabled>分类预览<span id="vault-plan-count"></span></button></div>
+      </header>
+      <section class="vault-exhibit vault-only" tabindex="0" role="button" aria-label="互动空间，点击或按空格和回车唤醒场景" aria-describedby="vault-particle-help">
+        <div class="vault-hero-copy"><h3>下一场冒险，<br />从收藏里出发。</h3><p>选好规则，预览分类。</p></div>
+      </section>
+      <div class="vault-particle-toolbar vault-only">
+        <div class="vault-scene-switch" role="group" aria-label="空间背景">
+          <button type="button" data-vault-scene="prism" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 16H3Z M12 3v16M3 19l9-6 9 6"/></svg>棱阵</button>
+          <button type="button" data-vault-scene="drift" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 16c6-13 12 13 18-8M3 10c6-13 12 13 18-8"/><circle cx="12" cy="12" r="1"/></svg>游流</button>
+          <button type="button" data-vault-scene="echo" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9c6-5 12 5 18 0M3 14c6-5 12 5 18 0M7 4v16m5-16v16m5-16v16"/></svg>回响</button>
+        </div>
+        <div class="vault-scene-actions"><span id="vault-particle-help">移动探索 · 点击唤醒</span><button id="vault-shuffle" type="button" aria-label="重新构图" title="重新构图"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1"/></svg></button><button id="vault-pause" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg><span id="vault-pause-label">暂停动态</span></button></div>
       </div>
-      <header class="traces-intro traces-only"><span class="traces-kicker"><i></i> THE ARCHIVE <span>藏品 · 秩序 · 下一程</span></span><h2>藏品<span>行记</span><sup>01</sup></h2><div class="traces-subtitle"><span>EVERY GAME, A TRACE.</span><p>让每一段冒险，都有迹可循。</p></div></header>
-      <div class="p3r-scene p3r-only" aria-hidden="true"><span class="scene-orbit orbit-a"></span><span class="scene-orbit orbit-b"></span><span class="scene-cross cross-a">+</span><span class="scene-cross cross-b">+</span><span class="scene-catalog">COLLECT.<br />CONNECT.<br />RE:PLAY.</span><span class="scene-label">THE NEXT CHAPTER<br /><b>IS YOURS.</b></span><span class="scene-disc"></span><span class="scene-disc-label">P<br />L<br />A<br />Y<span>↗</span></span><span class="scene-caption">OFFLINE / ON YOUR TERMS</span></div>
-      <header class="p3r-intro p3r-only"><span class="p3r-eyebrow">STEAM LIBRARY ORGANIZER / 01</span><h2>RE:LOAD<span>YOUR LIBRARY.</span></h2><p>重整收藏。找回下一场心动。</p><span class="intro-rule" aria-hidden="true"></span></header>
+      <section class="persona-hero" aria-label="主题画面">
+        <header class="p3r-intro p3r-only">
+
+          <div class="reload-topline" aria-hidden="true"><span>RE:ORGANIZE</span><span>01</span></div>
+          <div class="reload-title-block"><span class="p3r-eyebrow">STEAM LIBRARY ORGANIZER</span><h2>RE:LOAD<span>YOUR LIBRARY.</span></h2><p>重整收藏。找回下一场心动。</p></div>
+          <div class="reload-bottomline" aria-hidden="true"><b>RE:PLAY</b><span>FIND YOUR NEXT STORY.<br />COLLECT. CONNECT. CONTINUE.</span></div>
+        </header>
+        <header class="p5r-hero p5r-only">
+          <div class="royal-edition" aria-hidden="true"><span>THE NEXT HEIST</span><b>VOL. 01 / ROYAL</b></div>
+          <svg class="royal-emblem" viewBox="0 0 160 160" aria-hidden="true"><path d="m80 5 16 49 52-13-33 42 33 42-52-13-16 43-16-43-52 13 33-42L12 41l52 13z" fill="#101010" stroke="#fff9ed" stroke-width="4"/><path d="m80 38 9 33 33-9-23 22 23 23-33-10-9 30-9-30-32 10 23-23-23-22 32 9z" fill="#fff9ed"/></svg>
+          <h2 class="p5r-poster" aria-label="Take your time"><span>TAKE</span><span>YOUR</span><span>TIME.</span></h2>
+          <div class="p5r-message"><p>选好规则，预览分类。<br />把时间留给真正想玩的游戏。</p></div>
+          <div class="royal-calling-card" aria-hidden="true"><span class="royal-card-seal">予<br />告<br />状</span><div><b>STEAL BACK YOUR TIME.</b><span>把积灰的收藏，变成下一场冒险。</span></div><i>↗</i></div>
+        </header>
+        <div id="persona-art" class="persona-art" tabindex="0" role="button" aria-label="互动主题画面，点击或按回车和空格播放效果" aria-describedby="persona-art-help">
+          <div class="persona-portrait" aria-hidden="true"></div>
+          <div class="reload-art-graphics p3r-only" aria-hidden="true"><span class="reload-art-word">RE:PLAY</span><span class="reload-art-coordinate">01 / NEXT CHAPTER</span></div>
+          <div class="royal-art-graphics p5r-only" aria-hidden="true"><span class="royal-art-top">THE PHANTOM / YOUR NEXT MOVE</span><span class="royal-art-star">★</span><svg viewBox="0 0 400 400" preserveAspectRatio="none"><g fill="none" stroke="#fff9ed" stroke-width="2"><path d="m0 50 80 38M0 78l65 24M0 110l42 12M400 270l-61-10m61 42-78-23m78 56-54-24M10 400l69-69m-38 69 48-54"/></g></svg></div>
+          <canvas id="persona-canvas" class="persona-motion-layer" aria-hidden="true"></canvas>
+          <span class="persona-art-caption" aria-hidden="true">YOUR NEXT CHAPTER.</span>
+        </div>
+      </section>
+      <header class="p5r-review-heading p5r-only"><h2>你的游戏库。<em>你的规则。</em></h2><span>确认勾选，再出发。</span></header>
+      <div class="persona-motion-tools"><span id="persona-art-help">移动鼠标探索 · 点击人物画面互动</span><div><button id="persona-replay" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2 6M20 4v7h-7"/></svg>重播动效</button><button id="persona-pause" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg><span id="persona-pause-label">暂停动效</span></button></div></div>
       <header class="library-header"><div class="welcome-copy"><span class="eyebrow">YOUR LIBRARY, REIMAGINED</span><h2>让游戏库，井然有序。</h2><p>把整理交给规则，把时间留给游戏。</p></div><span class="library-emblem" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M10 23h17l5 5h22v23a5 5 0 0 1-5 5H15a5 5 0 0 1-5-5z"/><path d="M10 23V15a5 5 0 0 1 5-5h13l5 6h16a5 5 0 0 1 5 5v7"/><path d="m26 40 4 4 9-10"/></svg></span></header>
       <div class="stats" id="stats" aria-label="扫描统计" aria-busy="true">
         <article class="hero-stat"><div><span class="tile-label" id="stat-scope-label">当前范围</span><span class="tile-note" id="stat-scope-note">等待读取</span></div><strong class="tile-value" id="stat-scope">—</strong></article>
         <article><div><span class="tile-label">仅游戏</span><span class="tile-note" id="stat-games-note">游戏条目</span></div><strong class="tile-value" id="stat-games">—</strong></article>
-        <article><div><span class="tile-label">本机已安装</span><span class="tile-note">所有库目录</span></div><strong class="tile-value" id="stat-installed">—</strong></article>
+        <article><div><span class="tile-label">本机已安装</span></div><strong class="tile-value" id="stat-installed">—</strong></article>
         <article id="unresolved-tile"><div><span class="tile-label">待识别</span><span class="tile-note" id="stat-unresolved-note">资料不完整</span></div><strong class="tile-value" id="stat-unresolved">—</strong></article>
       </div>
       <section class="connection-error" id="connection-error" role="alert" hidden><div><strong>还没有连接到游戏库</strong><p id="connection-error-copy">请确认 Steam 已安装，或手动选择安装目录。</p></div><button id="connect-steam-btn" class="btn btn-secondary btn-compact" type="button">选择 Steam 目录</button></section>
@@ -96,7 +133,7 @@
         <div class="preview-stats" id="preview-stats" aria-label="所选分类摘要" hidden><span>已选 <strong id="preview-groups">—</strong> 个分类</span><span>覆盖 <strong id="preview-unique">—</strong> 个条目</span><span>总归属 <strong id="preview-memberships">—</strong></span><span>资料缺失 <strong id="preview-missing">—</strong></span></div>
         <div class="preview-scroll" id="preview-scroll">
           <div class="warning-list" id="preview-warnings" hidden aria-label="预览提醒"></div>
-          <div class="preview-empty" id="preview-empty"><div class="empty-visual" aria-hidden="true"><span class="empty-folder folder-back"></span><span class="empty-folder folder-front"><svg viewBox="0 0 40 40"><path d="M12 15h16a5 5 0 0 1 5 4l2 9a3 3 0 0 1-5 3l-5-4H15l-5 4a3 3 0 0 1-5-3l2-9a5 5 0 0 1 5-4Z"/><path d="M12 19v7m-3.5-3.5h7M26 21h.01M29 25h.01"/></svg></span><span class="empty-check">✓</span></div><h3 id="empty-title">好分类，从一份预览开始。</h3><p id="empty-copy">在左侧选好分类方式，生成专属于你的整理方案。<br />每个分类都可以检查、勾选，满意后再写入。</p><span class="empty-footnote">现在的操作不会更改任何 Steam 数据</span></div>
+          <div class="preview-empty" id="preview-empty"><div class="empty-visual" aria-hidden="true"><span class="empty-folder folder-back"></span><span class="empty-folder folder-front"><svg viewBox="0 0 40 40"><path d="M12 15h16a5 5 0 0 1 5 4l2 9a3 3 0 0 1-5 3l-5-4H15l-5 4a3 3 0 0 1-5-3l2-9a5 5 0 0 1 5-4Z"/><path d="M12 19v7m-3.5-3.5h7M26 21h.01M29 25h.01"/></svg></span><span class="empty-check">✓</span></div><h3 id="empty-title">先看看整理结果</h3><p id="empty-copy">选择分类方式，再生成预览。</p></div>
           <div class="search-empty" id="search-empty" role="status" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><h3>没有找到匹配的分类</h3><p>试试分类名或已展示的示例游戏名称。</p><button id="clear-search-btn" class="btn btn-secondary btn-compact" type="button">清除搜索</button></div>
           <div class="groups" id="groups"></div>
           <section class="result-panel" id="result-panel" aria-live="polite" hidden><span class="result-mark" aria-hidden="true">✓</span><div><h2 id="result-title">操作完成</h2><p id="result-copy"></p><p class="result-path" id="result-path"></p></div></section>
@@ -106,11 +143,14 @@
     </div>
   </main>
   <details class="diagnostics" id="diagnostics"><summary><span class="activity-dot" aria-hidden="true"></span><span id="log-hint">等待操作</span><span class="diagnostic-action">运行记录 <span aria-hidden="true">⌃</span></span></summary><div class="log" id="log" role="log" aria-live="polite" aria-relevant="additions"></div></details>
-  <footer class="actionbar" id="actionbar"><div class="action-copy"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/></svg></span><div><strong id="action-title">正在准备</strong><span id="action-hint">正在读取本机 Steam 数据</span></div></div><div class="action-buttons"><span class="shortcut-hint">Ctrl ↵</span><button id="plan-btn" class="btn btn-primary btn-large" type="button" disabled>生成分类预览</button><button id="apply-btn" class="btn btn-primary btn-large" type="button" disabled hidden><span class="btn-label">备份并写入 Steam</span></button></div></footer>
+  <footer class="actionbar" id="actionbar"><div class="action-copy"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/></svg></span><div><strong id="action-title">正在准备</strong><span id="action-hint">正在读取本机 Steam 数据</span></div></div><div class="action-buttons"><span class="shortcut-hint">Ctrl ↵</span><button id="plan-btn" class="btn btn-primary btn-large" type="button" disabled>生成预览</button><button id="apply-btn" class="btn btn-primary btn-large" type="button" disabled hidden><span class="btn-label">备份并写入 Steam</span></button></div></footer>
   <div class="scrim" id="scrim" hidden></div>
-  <section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-describedby="sheet-body sheet-note" tabindex="-1"><div class="sheet-grip" id="sheet-grip" aria-hidden="true"><span></span></div><div class="sheet-heading"><div><span class="section-kicker" id="sheet-kicker">确认操作</span><h2 id="sheet-title">写入 Steam 收藏夹</h2></div><button id="sheet-close" class="icon-btn" type="button" aria-label="关闭确认窗口">×</button></div><div class="sheet-body" id="sheet-body"></div><div class="sheet-note" id="sheet-note"></div><div class="sheet-error" id="sheet-error" role="alert" hidden></div><div class="sheet-buttons"><button id="sheet-cancel" class="btn btn-quiet" type="button">返回检查</button><button id="sheet-confirm" class="btn btn-primary" type="button">确认</button></div></section>
+  <section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-describedby="sheet-body sheet-note" tabindex="-1"><div class="sheet-grip" id="sheet-grip" aria-hidden="true"><span></span></div><div class="sheet-heading"><div><span class="section-kicker" id="sheet-kicker">确认操作</span><h2 id="sheet-title">写入 Steam 收藏夹</h2></div><button id="sheet-close" class="icon-btn" type="button" aria-label="关闭确认窗口"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="sheet-body" id="sheet-body"></div><div class="sheet-note" id="sheet-note"></div><div class="sheet-error" id="sheet-error" role="alert" hidden></div><div class="sheet-buttons"><button id="sheet-cancel" class="btn btn-quiet" type="button">返回检查</button><button id="sheet-confirm" class="btn btn-primary" type="button">确认</button></div></section>
   <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
   <script src="appearance.js"></script>
   <script src="app.js"></script>
+  <script src="vault.js"></script>
+  <script src="persona-motion.js"></script>
+  <script src="calm.js"></script>
 </body>
 </html>

@@ -1,0 +1,1239 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T11:53:36.540553+00:00",
+  "title": "Design System: 光域",
+  "extensions": {
+    "colorMeta": {
+      "p5r-red": {
+        "role": "primary",
+        "displayName": "P5R only / Red",
+        "tonalRamp": [
+          "oklch(15.00% 0.2098 24.53)",
+          "oklch(26.43% 0.2098 24.53)",
+          "oklch(37.86% 0.2098 24.53)",
+          "oklch(49.29% 0.2098 24.53)",
+          "oklch(60.71% 0.2098 24.53)",
+          "oklch(72.14% 0.2098 24.53)",
+          "oklch(83.57% 0.2098 24.53)",
+          "oklch(95.00% 0.2098 24.53)"
+        ]
+      },
+      "p5r-ink": {
+        "role": "neutral",
+        "displayName": "P5R only / Ink",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "p5r-paper": {
+        "role": "neutral",
+        "displayName": "P5R only / Paper",
+        "tonalRamp": [
+          "oklch(15.00% 0.0171 84.59)",
+          "oklch(26.43% 0.0171 84.59)",
+          "oklch(37.86% 0.0171 84.59)",
+          "oklch(49.29% 0.0171 84.59)",
+          "oklch(60.71% 0.0171 84.59)",
+          "oklch(72.14% 0.0171 84.59)",
+          "oklch(83.57% 0.0171 84.59)",
+          "oklch(95.00% 0.0171 84.59)"
+        ]
+      },
+      "p5r-bg": {
+        "role": "neutral",
+        "displayName": "P5R only / Bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "p5r-surface": {
+        "role": "neutral",
+        "displayName": "P5R only / Surface",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "p5r-surface-2": {
+        "role": "neutral",
+        "displayName": "P5R only / Surface 2",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "p5r-surface-hover": {
+        "role": "neutral",
+        "displayName": "P5R only / Surface Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "p5r-text": {
+        "role": "neutral",
+        "displayName": "P5R only / Text",
+        "tonalRamp": [
+          "oklch(15.00% 0.0098 87.47)",
+          "oklch(26.43% 0.0098 87.47)",
+          "oklch(37.86% 0.0098 87.47)",
+          "oklch(49.29% 0.0098 87.47)",
+          "oklch(60.71% 0.0098 87.47)",
+          "oklch(72.14% 0.0098 87.47)",
+          "oklch(83.57% 0.0098 87.47)",
+          "oklch(95.00% 0.0098 87.47)"
+        ]
+      },
+      "p5r-muted": {
+        "role": "neutral",
+        "displayName": "P5R only / Muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.0095 78.27)",
+          "oklch(26.43% 0.0095 78.27)",
+          "oklch(37.86% 0.0095 78.27)",
+          "oklch(49.29% 0.0095 78.27)",
+          "oklch(60.71% 0.0095 78.27)",
+          "oklch(72.14% 0.0095 78.27)",
+          "oklch(83.57% 0.0095 78.27)",
+          "oklch(95.00% 0.0095 78.27)"
+        ]
+      },
+      "p5r-muted-2": {
+        "role": "neutral",
+        "displayName": "P5R only / Muted 2",
+        "tonalRamp": [
+          "oklch(15.00% 0.0115 76.57)",
+          "oklch(26.43% 0.0115 76.57)",
+          "oklch(37.86% 0.0115 76.57)",
+          "oklch(49.29% 0.0115 76.57)",
+          "oklch(60.71% 0.0115 76.57)",
+          "oklch(72.14% 0.0115 76.57)",
+          "oklch(83.57% 0.0115 76.57)",
+          "oklch(95.00% 0.0115 76.57)"
+        ]
+      },
+      "p5r-stroke": {
+        "role": "neutral",
+        "displayName": "P5R only / Stroke",
+        "tonalRamp": [
+          "oklch(15.00% 0.0045 39.43)",
+          "oklch(26.43% 0.0045 39.43)",
+          "oklch(37.86% 0.0045 39.43)",
+          "oklch(49.29% 0.0045 39.43)",
+          "oklch(60.71% 0.0045 39.43)",
+          "oklch(72.14% 0.0045 39.43)",
+          "oklch(83.57% 0.0045 39.43)",
+          "oklch(95.00% 0.0045 39.43)"
+        ]
+      },
+      "p5r-stroke-strong": {
+        "role": "neutral",
+        "displayName": "P5R only / Stroke Strong",
+        "tonalRamp": [
+          "oklch(15.00% 0.0079 53.33)",
+          "oklch(26.43% 0.0079 53.33)",
+          "oklch(37.86% 0.0079 53.33)",
+          "oklch(49.29% 0.0079 53.33)",
+          "oklch(60.71% 0.0079 53.33)",
+          "oklch(72.14% 0.0079 53.33)",
+          "oklch(83.57% 0.0079 53.33)",
+          "oklch(95.00% 0.0079 53.33)"
+        ]
+      },
+      "p5r-primary": {
+        "role": "primary",
+        "displayName": "P5R only / Primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.1908 17.88)",
+          "oklch(26.43% 0.1908 17.88)",
+          "oklch(37.86% 0.1908 17.88)",
+          "oklch(49.29% 0.1908 17.88)",
+          "oklch(60.71% 0.1908 17.88)",
+          "oklch(72.14% 0.1908 17.88)",
+          "oklch(83.57% 0.1908 17.88)",
+          "oklch(95.00% 0.1908 17.88)"
+        ]
+      },
+      "p5r-primary-hover": {
+        "role": "primary",
+        "displayName": "P5R only / Primary Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.1379 15.83)",
+          "oklch(26.43% 0.1379 15.83)",
+          "oklch(37.86% 0.1379 15.83)",
+          "oklch(49.29% 0.1379 15.83)",
+          "oklch(60.71% 0.1379 15.83)",
+          "oklch(72.14% 0.1379 15.83)",
+          "oklch(83.57% 0.1379 15.83)",
+          "oklch(95.00% 0.1379 15.83)"
+        ]
+      },
+      "p5r-primary-soft": {
+        "role": "primary",
+        "displayName": "P5R only / Primary Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0504 4.68)",
+          "oklch(26.43% 0.0504 4.68)",
+          "oklch(37.86% 0.0504 4.68)",
+          "oklch(49.29% 0.0504 4.68)",
+          "oklch(60.71% 0.0504 4.68)",
+          "oklch(72.14% 0.0504 4.68)",
+          "oklch(83.57% 0.0504 4.68)",
+          "oklch(95.00% 0.0504 4.68)"
+        ]
+      },
+      "p5r-warning": {
+        "role": "neutral",
+        "displayName": "P5R only / Warning",
+        "tonalRamp": [
+          "oklch(15.00% 0.0888 84.15)",
+          "oklch(26.43% 0.0888 84.15)",
+          "oklch(37.86% 0.0888 84.15)",
+          "oklch(49.29% 0.0888 84.15)",
+          "oklch(60.71% 0.0888 84.15)",
+          "oklch(72.14% 0.0888 84.15)",
+          "oklch(83.57% 0.0888 84.15)",
+          "oklch(95.00% 0.0888 84.15)"
+        ]
+      },
+      "p5r-warning-soft": {
+        "role": "neutral",
+        "displayName": "P5R only / Warning Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0335 79.39)",
+          "oklch(26.43% 0.0335 79.39)",
+          "oklch(37.86% 0.0335 79.39)",
+          "oklch(49.29% 0.0335 79.39)",
+          "oklch(60.71% 0.0335 79.39)",
+          "oklch(72.14% 0.0335 79.39)",
+          "oklch(83.57% 0.0335 79.39)",
+          "oklch(95.00% 0.0335 79.39)"
+        ]
+      },
+      "p5r-danger-soft": {
+        "role": "neutral",
+        "displayName": "P5R only / Danger Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0411 5.12)",
+          "oklch(26.43% 0.0411 5.12)",
+          "oklch(37.86% 0.0411 5.12)",
+          "oklch(49.29% 0.0411 5.12)",
+          "oklch(60.71% 0.0411 5.12)",
+          "oklch(72.14% 0.0411 5.12)",
+          "oklch(83.57% 0.0411 5.12)",
+          "oklch(95.00% 0.0411 5.12)"
+        ]
+      },
+      "p5r-light-red": {
+        "role": "primary",
+        "displayName": "P5R only / Light Red",
+        "tonalRamp": [
+          "oklch(15.00% 0.2240 24.33)",
+          "oklch(26.43% 0.2240 24.33)",
+          "oklch(37.86% 0.2240 24.33)",
+          "oklch(49.29% 0.2240 24.33)",
+          "oklch(60.71% 0.2240 24.33)",
+          "oklch(72.14% 0.2240 24.33)",
+          "oklch(83.57% 0.2240 24.33)",
+          "oklch(95.00% 0.2240 24.33)"
+        ]
+      },
+      "p5r-light-bg": {
+        "role": "neutral",
+        "displayName": "P5R only / Light Bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.0115 84.58)",
+          "oklch(26.43% 0.0115 84.58)",
+          "oklch(37.86% 0.0115 84.58)",
+          "oklch(49.29% 0.0115 84.58)",
+          "oklch(60.71% 0.0115 84.58)",
+          "oklch(72.14% 0.0115 84.58)",
+          "oklch(83.57% 0.0115 84.58)",
+          "oklch(95.00% 0.0115 84.58)"
+        ]
+      },
+      "p5r-light-surface": {
+        "role": "neutral",
+        "displayName": "P5R only / Light Surface",
+        "tonalRamp": [
+          "oklch(15.00% 0.0130 82.40)",
+          "oklch(26.43% 0.0130 82.40)",
+          "oklch(37.86% 0.0130 82.40)",
+          "oklch(49.29% 0.0130 82.40)",
+          "oklch(60.71% 0.0130 82.40)",
+          "oklch(72.14% 0.0130 82.40)",
+          "oklch(83.57% 0.0130 82.40)",
+          "oklch(95.00% 0.0130 82.40)"
+        ]
+      },
+      "p5r-light-text": {
+        "role": "neutral",
+        "displayName": "P5R only / Light Text",
+        "tonalRamp": [
+          "oklch(15.00% 0.0066 17.74)",
+          "oklch(26.43% 0.0066 17.74)",
+          "oklch(37.86% 0.0066 17.74)",
+          "oklch(49.29% 0.0066 17.74)",
+          "oklch(60.71% 0.0066 17.74)",
+          "oklch(72.14% 0.0066 17.74)",
+          "oklch(83.57% 0.0066 17.74)",
+          "oklch(95.00% 0.0066 17.74)"
+        ]
+      },
+      "p5r-light-primary": {
+        "role": "primary",
+        "displayName": "P5R only / Light Primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.1954 23.94)",
+          "oklch(26.43% 0.1954 23.94)",
+          "oklch(37.86% 0.1954 23.94)",
+          "oklch(49.29% 0.1954 23.94)",
+          "oklch(60.71% 0.1954 23.94)",
+          "oklch(72.14% 0.1954 23.94)",
+          "oklch(83.57% 0.1954 23.94)",
+          "oklch(95.00% 0.1954 23.94)"
+        ]
+      },
+      "bg": {
+        "role": "neutral",
+        "displayName": "Blue Black",
+        "tonalRamp": [
+          "oklch(15.00% 0.0092 240.41)",
+          "oklch(26.43% 0.0092 240.41)",
+          "oklch(37.86% 0.0092 240.41)",
+          "oklch(49.29% 0.0092 240.41)",
+          "oklch(60.71% 0.0092 240.41)",
+          "oklch(72.14% 0.0092 240.41)",
+          "oklch(83.57% 0.0092 240.41)",
+          "oklch(95.00% 0.0092 240.41)"
+        ]
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "Quiet Slate",
+        "tonalRamp": [
+          "oklch(15.00% 0.0120 205.73)",
+          "oklch(26.43% 0.0120 205.73)",
+          "oklch(37.86% 0.0120 205.73)",
+          "oklch(49.29% 0.0120 205.73)",
+          "oklch(60.71% 0.0120 205.73)",
+          "oklch(72.14% 0.0120 205.73)",
+          "oklch(83.57% 0.0120 205.73)",
+          "oklch(95.00% 0.0120 205.73)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "tonalRamp": [
+          "oklch(15.00% 0.0143 220.26)",
+          "oklch(26.43% 0.0143 220.26)",
+          "oklch(37.86% 0.0143 220.26)",
+          "oklch(49.29% 0.0143 220.26)",
+          "oklch(60.71% 0.0143 220.26)",
+          "oklch(72.14% 0.0143 220.26)",
+          "oklch(83.57% 0.0143 220.26)",
+          "oklch(95.00% 0.0143 220.26)"
+        ]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Surface 2",
+        "tonalRamp": [
+          "oklch(15.00% 0.0182 207.90)",
+          "oklch(26.43% 0.0182 207.90)",
+          "oklch(37.86% 0.0182 207.90)",
+          "oklch(49.29% 0.0182 207.90)",
+          "oklch(60.71% 0.0182 207.90)",
+          "oklch(72.14% 0.0182 207.90)",
+          "oklch(83.57% 0.0182 207.90)",
+          "oklch(95.00% 0.0182 207.90)"
+        ]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Surface Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.0213 205.74)",
+          "oklch(26.43% 0.0213 205.74)",
+          "oklch(37.86% 0.0213 205.74)",
+          "oklch(49.29% 0.0213 205.74)",
+          "oklch(60.71% 0.0213 205.74)",
+          "oklch(72.14% 0.0213 205.74)",
+          "oklch(83.57% 0.0213 205.74)",
+          "oklch(95.00% 0.0213 205.74)"
+        ]
+      },
+      "stroke": {
+        "role": "neutral",
+        "displayName": "Stroke",
+        "tonalRamp": [
+          "oklch(15.00% 0.0402 172.62)",
+          "oklch(26.43% 0.0402 172.62)",
+          "oklch(37.86% 0.0402 172.62)",
+          "oklch(49.29% 0.0402 172.62)",
+          "oklch(60.71% 0.0402 172.62)",
+          "oklch(72.14% 0.0402 172.62)",
+          "oklch(83.57% 0.0402 172.62)",
+          "oklch(95.00% 0.0402 172.62)"
+        ]
+      },
+      "stroke-strong": {
+        "role": "neutral",
+        "displayName": "Stroke Strong",
+        "tonalRamp": [
+          "oklch(15.00% 0.0402 172.62)",
+          "oklch(26.43% 0.0402 172.62)",
+          "oklch(37.86% 0.0402 172.62)",
+          "oklch(49.29% 0.0402 172.62)",
+          "oklch(60.71% 0.0402 172.62)",
+          "oklch(72.14% 0.0402 172.62)",
+          "oklch(83.57% 0.0402 172.62)",
+          "oklch(95.00% 0.0402 172.62)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Cool White",
+        "tonalRamp": [
+          "oklch(15.00% 0.0116 153.67)",
+          "oklch(26.43% 0.0116 153.67)",
+          "oklch(37.86% 0.0116 153.67)",
+          "oklch(49.29% 0.0116 153.67)",
+          "oklch(60.71% 0.0116 153.67)",
+          "oklch(72.14% 0.0116 153.67)",
+          "oklch(83.57% 0.0116 153.67)",
+          "oklch(95.00% 0.0116 153.67)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Mist Gray",
+        "tonalRamp": [
+          "oklch(15.00% 0.0256 170.75)",
+          "oklch(26.43% 0.0256 170.75)",
+          "oklch(37.86% 0.0256 170.75)",
+          "oklch(49.29% 0.0256 170.75)",
+          "oklch(60.71% 0.0256 170.75)",
+          "oklch(72.14% 0.0256 170.75)",
+          "oklch(83.57% 0.0256 170.75)",
+          "oklch(95.00% 0.0256 170.75)"
+        ]
+      },
+      "muted-2": {
+        "role": "neutral",
+        "displayName": "Supporting Mist Gray",
+        "tonalRamp": [
+          "oklch(15.00% 0.0293 167.47)",
+          "oklch(26.43% 0.0293 167.47)",
+          "oklch(37.86% 0.0293 167.47)",
+          "oklch(49.29% 0.0293 167.47)",
+          "oklch(60.71% 0.0293 167.47)",
+          "oklch(72.14% 0.0293 167.47)",
+          "oklch(83.57% 0.0293 167.47)",
+          "oklch(95.00% 0.0293 167.47)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Sea-glass Signal",
+        "tonalRamp": [
+          "oklch(15.00% 0.0583 161.24)",
+          "oklch(26.43% 0.0583 161.24)",
+          "oklch(37.86% 0.0583 161.24)",
+          "oklch(49.29% 0.0583 161.24)",
+          "oklch(60.71% 0.0583 161.24)",
+          "oklch(72.14% 0.0583 161.24)",
+          "oklch(83.57% 0.0583 161.24)",
+          "oklch(95.00% 0.0583 161.24)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Primary Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.0386 158.36)",
+          "oklch(26.43% 0.0386 158.36)",
+          "oklch(37.86% 0.0386 158.36)",
+          "oklch(49.29% 0.0386 158.36)",
+          "oklch(60.71% 0.0386 158.36)",
+          "oklch(72.14% 0.0386 158.36)",
+          "oklch(83.57% 0.0386 158.36)",
+          "oklch(95.00% 0.0386 158.36)"
+        ]
+      },
+      "primary-soft": {
+        "role": "primary",
+        "displayName": "Primary Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0737 159.09)",
+          "oklch(26.43% 0.0737 159.09)",
+          "oklch(37.86% 0.0737 159.09)",
+          "oklch(49.29% 0.0737 159.09)",
+          "oklch(60.71% 0.0737 159.09)",
+          "oklch(72.14% 0.0737 159.09)",
+          "oklch(83.57% 0.0737 159.09)",
+          "oklch(95.00% 0.0737 159.09)"
+        ]
+      },
+      "success": {
+        "role": "neutral",
+        "displayName": "Success",
+        "tonalRamp": [
+          "oklch(15.00% 0.0614 158.93)",
+          "oklch(26.43% 0.0614 158.93)",
+          "oklch(37.86% 0.0614 158.93)",
+          "oklch(49.29% 0.0614 158.93)",
+          "oklch(60.71% 0.0614 158.93)",
+          "oklch(72.14% 0.0614 158.93)",
+          "oklch(83.57% 0.0614 158.93)",
+          "oklch(95.00% 0.0614 158.93)"
+        ]
+      },
+      "success-soft": {
+        "role": "neutral",
+        "displayName": "Success Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0614 158.93)",
+          "oklch(26.43% 0.0614 158.93)",
+          "oklch(37.86% 0.0614 158.93)",
+          "oklch(49.29% 0.0614 158.93)",
+          "oklch(60.71% 0.0614 158.93)",
+          "oklch(72.14% 0.0614 158.93)",
+          "oklch(83.57% 0.0614 158.93)",
+          "oklch(95.00% 0.0614 158.93)"
+        ]
+      },
+      "warning": {
+        "role": "neutral",
+        "displayName": "Warning",
+        "tonalRamp": [
+          "oklch(15.00% 0.0827 78.97)",
+          "oklch(26.43% 0.0827 78.97)",
+          "oklch(37.86% 0.0827 78.97)",
+          "oklch(49.29% 0.0827 78.97)",
+          "oklch(60.71% 0.0827 78.97)",
+          "oklch(72.14% 0.0827 78.97)",
+          "oklch(83.57% 0.0827 78.97)",
+          "oklch(95.00% 0.0827 78.97)"
+        ]
+      },
+      "warning-soft": {
+        "role": "neutral",
+        "displayName": "Warning Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0302 79.04)",
+          "oklch(26.43% 0.0302 79.04)",
+          "oklch(37.86% 0.0302 79.04)",
+          "oklch(49.29% 0.0302 79.04)",
+          "oklch(60.71% 0.0302 79.04)",
+          "oklch(72.14% 0.0302 79.04)",
+          "oklch(83.57% 0.0302 79.04)",
+          "oklch(95.00% 0.0302 79.04)"
+        ]
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger",
+        "tonalRamp": [
+          "oklch(15.00% 0.0884 10.36)",
+          "oklch(26.43% 0.0884 10.36)",
+          "oklch(37.86% 0.0884 10.36)",
+          "oklch(49.29% 0.0884 10.36)",
+          "oklch(60.71% 0.0884 10.36)",
+          "oklch(72.14% 0.0884 10.36)",
+          "oklch(83.57% 0.0884 10.36)",
+          "oklch(95.00% 0.0884 10.36)"
+        ]
+      },
+      "danger-soft": {
+        "role": "neutral",
+        "displayName": "Danger Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0381 0.75)",
+          "oklch(26.43% 0.0381 0.75)",
+          "oklch(37.86% 0.0381 0.75)",
+          "oklch(49.29% 0.0381 0.75)",
+          "oklch(60.71% 0.0381 0.75)",
+          "oklch(72.14% 0.0381 0.75)",
+          "oklch(83.57% 0.0381 0.75)",
+          "oklch(95.00% 0.0381 0.75)"
+        ]
+      },
+      "field-seaglass": {
+        "role": "primary",
+        "displayName": "Sea-glass Contour",
+        "tonalRamp": [
+          "oklch(15.00% 0.0700 192.21)",
+          "oklch(26.43% 0.0700 192.21)",
+          "oklch(37.86% 0.0700 192.21)",
+          "oklch(49.29% 0.0700 192.21)",
+          "oklch(60.71% 0.0700 192.21)",
+          "oklch(72.14% 0.0700 192.21)",
+          "oklch(83.57% 0.0700 192.21)",
+          "oklch(95.00% 0.0700 192.21)"
+        ]
+      },
+      "field-copper": {
+        "role": "tertiary",
+        "displayName": "Copper Contour",
+        "tonalRamp": [
+          "oklch(15.00% 0.0936 59.25)",
+          "oklch(26.43% 0.0936 59.25)",
+          "oklch(37.86% 0.0936 59.25)",
+          "oklch(49.29% 0.0936 59.25)",
+          "oklch(60.71% 0.0936 59.25)",
+          "oklch(72.14% 0.0936 59.25)",
+          "oklch(83.57% 0.0936 59.25)",
+          "oklch(95.00% 0.0936 59.25)"
+        ]
+      },
+      "light-bg": {
+        "role": "neutral",
+        "displayName": "Light Bg",
+        "tonalRamp": [
+          "oklch(15.00% 0.0045 179.73)",
+          "oklch(26.43% 0.0045 179.73)",
+          "oklch(37.86% 0.0045 179.73)",
+          "oklch(49.29% 0.0045 179.73)",
+          "oklch(60.71% 0.0045 179.73)",
+          "oklch(72.14% 0.0045 179.73)",
+          "oklch(83.57% 0.0045 179.73)",
+          "oklch(95.00% 0.0045 179.73)"
+        ]
+      },
+      "light-sidebar": {
+        "role": "neutral",
+        "displayName": "Light Sidebar",
+        "tonalRamp": [
+          "oklch(15.00% 0.0069 174.37)",
+          "oklch(26.43% 0.0069 174.37)",
+          "oklch(37.86% 0.0069 174.37)",
+          "oklch(49.29% 0.0069 174.37)",
+          "oklch(60.71% 0.0069 174.37)",
+          "oklch(72.14% 0.0069 174.37)",
+          "oklch(83.57% 0.0069 174.37)",
+          "oklch(95.00% 0.0069 174.37)"
+        ]
+      },
+      "light-surface": {
+        "role": "neutral",
+        "displayName": "Light Surface",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 89.88)",
+          "oklch(26.43% 0.0000 89.88)",
+          "oklch(37.86% 0.0000 89.88)",
+          "oklch(49.29% 0.0000 89.88)",
+          "oklch(60.71% 0.0000 89.88)",
+          "oklch(72.14% 0.0000 89.88)",
+          "oklch(83.57% 0.0000 89.88)",
+          "oklch(95.00% 0.0000 89.88)"
+        ]
+      },
+      "light-surface-2": {
+        "role": "neutral",
+        "displayName": "Light Surface 2",
+        "tonalRamp": [
+          "oklch(15.00% 0.0085 168.74)",
+          "oklch(26.43% 0.0085 168.74)",
+          "oklch(37.86% 0.0085 168.74)",
+          "oklch(49.29% 0.0085 168.74)",
+          "oklch(60.71% 0.0085 168.74)",
+          "oklch(72.14% 0.0085 168.74)",
+          "oklch(83.57% 0.0085 168.74)",
+          "oklch(95.00% 0.0085 168.74)"
+        ]
+      },
+      "light-surface-hover": {
+        "role": "neutral",
+        "displayName": "Light Surface Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.0120 170.25)",
+          "oklch(26.43% 0.0120 170.25)",
+          "oklch(37.86% 0.0120 170.25)",
+          "oklch(49.29% 0.0120 170.25)",
+          "oklch(60.71% 0.0120 170.25)",
+          "oklch(72.14% 0.0120 170.25)",
+          "oklch(83.57% 0.0120 170.25)",
+          "oklch(95.00% 0.0120 170.25)"
+        ]
+      },
+      "light-stroke": {
+        "role": "neutral",
+        "displayName": "Light Stroke",
+        "tonalRamp": [
+          "oklch(15.00% 0.0454 166.54)",
+          "oklch(26.43% 0.0454 166.54)",
+          "oklch(37.86% 0.0454 166.54)",
+          "oklch(49.29% 0.0454 166.54)",
+          "oklch(60.71% 0.0454 166.54)",
+          "oklch(72.14% 0.0454 166.54)",
+          "oklch(83.57% 0.0454 166.54)",
+          "oklch(95.00% 0.0454 166.54)"
+        ]
+      },
+      "light-stroke-strong": {
+        "role": "neutral",
+        "displayName": "Light Stroke Strong",
+        "tonalRamp": [
+          "oklch(15.00% 0.0454 166.54)",
+          "oklch(26.43% 0.0454 166.54)",
+          "oklch(37.86% 0.0454 166.54)",
+          "oklch(49.29% 0.0454 166.54)",
+          "oklch(60.71% 0.0454 166.54)",
+          "oklch(72.14% 0.0454 166.54)",
+          "oklch(83.57% 0.0454 166.54)",
+          "oklch(95.00% 0.0454 166.54)"
+        ]
+      },
+      "light-text": {
+        "role": "neutral",
+        "displayName": "Light Text",
+        "tonalRamp": [
+          "oklch(15.00% 0.0258 179.76)",
+          "oklch(26.43% 0.0258 179.76)",
+          "oklch(37.86% 0.0258 179.76)",
+          "oklch(49.29% 0.0258 179.76)",
+          "oklch(60.71% 0.0258 179.76)",
+          "oklch(72.14% 0.0258 179.76)",
+          "oklch(83.57% 0.0258 179.76)",
+          "oklch(95.00% 0.0258 179.76)"
+        ]
+      },
+      "light-muted": {
+        "role": "neutral",
+        "displayName": "Light Muted",
+        "tonalRamp": [
+          "oklch(15.00% 0.0312 172.65)",
+          "oklch(26.43% 0.0312 172.65)",
+          "oklch(37.86% 0.0312 172.65)",
+          "oklch(49.29% 0.0312 172.65)",
+          "oklch(60.71% 0.0312 172.65)",
+          "oklch(72.14% 0.0312 172.65)",
+          "oklch(83.57% 0.0312 172.65)",
+          "oklch(95.00% 0.0312 172.65)"
+        ]
+      },
+      "light-muted-2": {
+        "role": "neutral",
+        "displayName": "Light Muted 2",
+        "tonalRamp": [
+          "oklch(15.00% 0.0250 171.05)",
+          "oklch(26.43% 0.0250 171.05)",
+          "oklch(37.86% 0.0250 171.05)",
+          "oklch(49.29% 0.0250 171.05)",
+          "oklch(60.71% 0.0250 171.05)",
+          "oklch(72.14% 0.0250 171.05)",
+          "oklch(83.57% 0.0250 171.05)",
+          "oklch(95.00% 0.0250 171.05)"
+        ]
+      },
+      "light-primary": {
+        "role": "primary",
+        "displayName": "Light Primary",
+        "tonalRamp": [
+          "oklch(15.00% 0.0786 166.37)",
+          "oklch(26.43% 0.0786 166.37)",
+          "oklch(37.86% 0.0786 166.37)",
+          "oklch(49.29% 0.0786 166.37)",
+          "oklch(60.71% 0.0786 166.37)",
+          "oklch(72.14% 0.0786 166.37)",
+          "oklch(83.57% 0.0786 166.37)",
+          "oklch(95.00% 0.0786 166.37)"
+        ]
+      },
+      "light-primary-hover": {
+        "role": "primary",
+        "displayName": "Light Primary Hover",
+        "tonalRamp": [
+          "oklch(15.00% 0.0701 165.79)",
+          "oklch(26.43% 0.0701 165.79)",
+          "oklch(37.86% 0.0701 165.79)",
+          "oklch(49.29% 0.0701 165.79)",
+          "oklch(60.71% 0.0701 165.79)",
+          "oklch(72.14% 0.0701 165.79)",
+          "oklch(83.57% 0.0701 165.79)",
+          "oklch(95.00% 0.0701 165.79)"
+        ]
+      },
+      "light-primary-soft": {
+        "role": "primary",
+        "displayName": "Light Primary Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0192 162.91)",
+          "oklch(26.43% 0.0192 162.91)",
+          "oklch(37.86% 0.0192 162.91)",
+          "oklch(49.29% 0.0192 162.91)",
+          "oklch(60.71% 0.0192 162.91)",
+          "oklch(72.14% 0.0192 162.91)",
+          "oklch(83.57% 0.0192 162.91)",
+          "oklch(95.00% 0.0192 162.91)"
+        ]
+      },
+      "light-success": {
+        "role": "neutral",
+        "displayName": "Light Success",
+        "tonalRamp": [
+          "oklch(15.00% 0.0737 160.46)",
+          "oklch(26.43% 0.0737 160.46)",
+          "oklch(37.86% 0.0737 160.46)",
+          "oklch(49.29% 0.0737 160.46)",
+          "oklch(60.71% 0.0737 160.46)",
+          "oklch(72.14% 0.0737 160.46)",
+          "oklch(83.57% 0.0737 160.46)",
+          "oklch(95.00% 0.0737 160.46)"
+        ]
+      },
+      "light-success-soft": {
+        "role": "neutral",
+        "displayName": "Light Success Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0175 153.56)",
+          "oklch(26.43% 0.0175 153.56)",
+          "oklch(37.86% 0.0175 153.56)",
+          "oklch(49.29% 0.0175 153.56)",
+          "oklch(60.71% 0.0175 153.56)",
+          "oklch(72.14% 0.0175 153.56)",
+          "oklch(83.57% 0.0175 153.56)",
+          "oklch(95.00% 0.0175 153.56)"
+        ]
+      },
+      "light-warning": {
+        "role": "neutral",
+        "displayName": "Light Warning",
+        "tonalRamp": [
+          "oklch(15.00% 0.0983 74.09)",
+          "oklch(26.43% 0.0983 74.09)",
+          "oklch(37.86% 0.0983 74.09)",
+          "oklch(49.29% 0.0983 74.09)",
+          "oklch(60.71% 0.0983 74.09)",
+          "oklch(72.14% 0.0983 74.09)",
+          "oklch(83.57% 0.0983 74.09)",
+          "oklch(95.00% 0.0983 74.09)"
+        ]
+      },
+      "light-warning-soft": {
+        "role": "neutral",
+        "displayName": "Light Warning Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0389 82.35)",
+          "oklch(26.43% 0.0389 82.35)",
+          "oklch(37.86% 0.0389 82.35)",
+          "oklch(49.29% 0.0389 82.35)",
+          "oklch(60.71% 0.0389 82.35)",
+          "oklch(72.14% 0.0389 82.35)",
+          "oklch(83.57% 0.0389 82.35)",
+          "oklch(95.00% 0.0389 82.35)"
+        ]
+      },
+      "light-danger": {
+        "role": "neutral",
+        "displayName": "Light Danger",
+        "tonalRamp": [
+          "oklch(15.00% 0.1407 17.59)",
+          "oklch(26.43% 0.1407 17.59)",
+          "oklch(37.86% 0.1407 17.59)",
+          "oklch(49.29% 0.1407 17.59)",
+          "oklch(60.71% 0.1407 17.59)",
+          "oklch(72.14% 0.1407 17.59)",
+          "oklch(83.57% 0.1407 17.59)",
+          "oklch(95.00% 0.1407 17.59)"
+        ]
+      },
+      "light-danger-soft": {
+        "role": "neutral",
+        "displayName": "Light Danger Soft",
+        "tonalRamp": [
+          "oklch(15.00% 0.0209 10.22)",
+          "oklch(26.43% 0.0209 10.22)",
+          "oklch(37.86% 0.0209 10.22)",
+          "oklch(49.29% 0.0209 10.22)",
+          "oklch(60.71% 0.0209 10.22)",
+          "oklch(72.14% 0.0209 10.22)",
+          "oklch(83.57% 0.0209 10.22)",
+          "oklch(95.00% 0.0209 10.22)"
+        ]
+      },
+      "light-field-seaglass": {
+        "role": "primary",
+        "displayName": "Light Field Seaglass",
+        "tonalRamp": [
+          "oklch(15.00% 0.0752 193.80)",
+          "oklch(26.43% 0.0752 193.80)",
+          "oklch(37.86% 0.0752 193.80)",
+          "oklch(49.29% 0.0752 193.80)",
+          "oklch(60.71% 0.0752 193.80)",
+          "oklch(72.14% 0.0752 193.80)",
+          "oklch(83.57% 0.0752 193.80)",
+          "oklch(95.00% 0.0752 193.80)"
+        ]
+      },
+      "light-field-iris": {
+        "role": "secondary",
+        "displayName": "Light Field Iris",
+        "tonalRamp": [
+          "oklch(15.00% 0.1075 274.74)",
+          "oklch(26.43% 0.1075 274.74)",
+          "oklch(37.86% 0.1075 274.74)",
+          "oklch(49.29% 0.1075 274.74)",
+          "oklch(60.71% 0.1075 274.74)",
+          "oklch(72.14% 0.1075 274.74)",
+          "oklch(83.57% 0.1075 274.74)",
+          "oklch(95.00% 0.1075 274.74)"
+        ]
+      },
+      "light-field-copper": {
+        "role": "tertiary",
+        "displayName": "Light Field Copper",
+        "tonalRamp": [
+          "oklch(15.00% 0.0905 45.91)",
+          "oklch(26.43% 0.0905 45.91)",
+          "oklch(37.86% 0.0905 45.91)",
+          "oklch(49.29% 0.0905 45.91)",
+          "oklch(60.71% 0.0905 45.91)",
+          "oklch(72.14% 0.0905 45.91)",
+          "oklch(83.57% 0.0905 45.91)",
+          "oklch(95.00% 0.0905 45.91)"
+        ]
+      },
+      "field-pearl": {
+        "role": "secondary",
+        "displayName": "Iris Contour",
+        "tonalRamp": [
+          "oklch(15.00% 0.0235 179.86)",
+          "oklch(26.43% 0.0235 179.86)",
+          "oklch(37.86% 0.0235 179.86)",
+          "oklch(49.29% 0.0235 179.86)",
+          "oklch(60.71% 0.0235 179.86)",
+          "oklch(72.14% 0.0235 179.86)",
+          "oklch(83.57% 0.0235 179.86)",
+          "oklch(95.00% 0.0235 179.86)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Left-aligned Invitation",
+        "purpose": "Native system type in the two-line 光域 invitation; 40px compact desktop and 38px mobile."
+      },
+      "headline": {
+        "displayName": "Workspace Heading",
+        "purpose": "Current 光域 or review workspace; 17px mobile."
+      },
+      "title": {
+        "displayName": "Section Heading",
+        "purpose": "Rules and review headings."
+      },
+      "body": {
+        "displayName": "Native Reading Text",
+        "purpose": "Inherited system text baseline."
+      },
+      "label": {
+        "displayName": "Control Label",
+        "purpose": "Primary action and compact control names."
+      },
+      "p5r-display": {
+        "displayName": "P5R Display",
+        "purpose": "P5R only: locally hosted OFL Barlow Condensed Black Italic, aliased Royal Display; italic English paper-cut poster. 76px compact, 62px mobile."
+      },
+      "p5r-message": {
+        "displayName": "P5R Message",
+        "purpose": "P5R only: native system Chinese task statement; 22px compact and 19px mobile."
+      },
+      "p5r-metric": {
+        "displayName": "P5R Metric",
+        "purpose": "P5R only: italic Royal Display scan-strip numbers; confirmation metrics enlarge to 36px."
+      },
+      "p5r-review-title": {
+        "displayName": "P5R Review-Title",
+        "purpose": "P5R only: bold italic system heading after every generated preview, including empty results; 22px compact and 20px mobile."
+      }
+    },
+    "shadows": [
+      {
+        "name": "overlay-dark",
+        "value": "0 24px 80px #0008",
+        "purpose": "Menus and confirmation sheet in dark 光域."
+      },
+      {
+        "name": "overlay-light",
+        "value": "0 24px 80px #20102f26",
+        "purpose": "Menus and confirmation sheet in light 光域."
+      },
+      {
+        "name": "primary-hover",
+        "value": "0 3px 14px #0002",
+        "purpose": "Enabled primary action hover."
+      },
+      {
+        "name": "search-focus",
+        "value": "0 0 0 2px var(--primary-soft)",
+        "purpose": "Search focus-within treatment alongside sea-glass border."
+      },
+      {
+        "name": "p5r-overlay",
+        "value": "0 18px 60px #0006",
+        "purpose": "P5R only: menus and square confirmation sheet; review remains flat."
+      },
+      {
+        "name": "p5r-search-focus",
+        "value": "2px solid var(--primary); outline-offset: 2px",
+        "purpose": "P5R only: search focus outline; standard keyboard focus is currentColor with 4px offset."
+      }
+    ],
+    "motion": [
+      {
+        "name": "p5r-snap",
+        "value": "cubic-bezier(.16,1,.3,1)",
+        "purpose": "P5R only: finite swipe, paper paste, review arrival and control movement. Source-defined timing; not independently measured in captures."
+      },
+      {
+        "name": "p5r-swipe",
+        "value": "480ms; second layer +40ms",
+        "purpose": "P5R only: paper then ink passes across viewport on appearance entry; pointer-events none; lifecycle class clears after 840ms."
+      },
+      {
+        "name": "p5r-paste",
+        "value": "620ms; delays 60ms / 110ms / 160ms",
+        "purpose": "P5R only: finite perspective paper arrival; appearance entry or explicit homepage replay."
+      },
+      {
+        "name": "p5r-review",
+        "value": "300ms",
+        "purpose": "P5R only: generated preview enters from slight translation and rotation; lifecycle class clears after 640ms."
+      },
+      {
+        "name": "p5r-controls",
+        "value": "180ms rules / 160ms primary",
+        "purpose": "P5R only: 3px rule slide and 2px action lift. System or stored reduced motion disables transitions and animations and hides cuts."
+      },
+      {
+        "name": "lightfield-ease",
+        "value": "cubic-bezier(.22,1,.36,1)",
+        "purpose": "光域 review arrival."
+      },
+      {
+        "name": "control-transition",
+        "value": "140ms",
+        "purpose": "Background, border, color and shadow changes."
+      },
+      {
+        "name": "review-arrive",
+        "value": "220ms",
+        "purpose": "光域 review entry with full motion only."
+      },
+      {
+        "name": "persona-pointer",
+        "value": "stiffness 110; damping 16; capped frame delta 50ms; paint interval >= 32ms",
+        "purpose": "Flat profile cutout parallax and P5R shallow poster tilt; controls retain their layout."
+      },
+      {
+        "name": "persona-lifecycle",
+        "value": "P5R: 6s entry / 8s replay / 2.2s input; visible P3R water continuous; DPR <= 1.4",
+        "purpose": "Clipped hero surface: P3R broad water reflections at 224x112/~30fps and two opposite circular scene reveals (460ms growth, 55ms stagger, clear at 515ms); P5R black/white five-point comic impact. Observe the unclipped stage. Pause, reduced motion, offscreen, hidden and review release masks and stop frames."
+      },
+      {
+        "name": "persona-pause",
+        "value": "steam-organizer-persona-paused; system/application reduced motion wins",
+        "purpose": "Homepage replay/pause controls, minimum target36px. Pause persists across P3R/P5R and cancels replay; controls and canvas hidden in review."
+      },
+      {
+        "name": "lightfield-settle",
+        "value": "240ms scene fade; 2400ms pulse; 4500ms interaction window",
+        "purpose": "Three native scene choices; pause/reduced/hidden/review/theme change cancel fades. At most three pulses."
+      },
+      {
+        "name": "lightfield-render-budget",
+        "value": "DPR <= 1.5; <= 2000000 pixels; GPU ambient >=32ms / interaction >=15ms",
+        "purpose": "WebGL2 slow ambient only in the visible home view; Canvas2D idle stops. Pause, reduced motion, review, hidden, forced colors and context loss suspend drawing. SVG keeps a projected still."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stacked",
+        "value": "760px"
+      },
+      {
+        "name": "narrow-desktop",
+        "value": "1100px"
+      },
+      {
+        "name": "short-desktop-height",
+        "value": "730px",
+        "purpose": "Compact sidebar and stage spacing."
+      },
+      {
+        "name": "p5r-stacked",
+        "value": "760px"
+      },
+      {
+        "name": "p5r-narrow-desktop",
+        "value": "1100px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Spatial Scene Controls",
+      "kind": "custom",
+      "refersTo": "field-control",
+      "description": "The real background is procedural WebGL2 / Canvas2D, not an embedded SVG specimen. Three independent spatial topologies share native controls.",
+      "html": "<div class=\"ds-scenes\" role=\"group\" aria-label=\"空间背景\"><button aria-pressed=\"true\">棱阵</button><button aria-pressed=\"false\">游流</button><button aria-pressed=\"false\">回响</button></div>",
+      "css": ".ds-scenes{display:flex;gap:3px;padding:4px;border:1px solid var(--stroke);border-radius:12px;background:var(--surface)}.ds-scenes button{min-height:36px;padding:8px 12px;border:0;border-radius:8px;background:none;color:var(--muted);font:inherit}.ds-scenes [aria-pressed=true]{color:var(--text);background:var(--surface-hover)}"
+    },
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Generate a plan or proceed to the protected write.",
+      "html": "<button type=\"button\" class=\"ds-primary\">生成分类预览</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif);font-size:14px;font-weight:550;padding:9px 15px;border:1px solid transparent;border-radius:8px;cursor:pointer;transition:background-color 140ms,border-color 140ms,color 140ms,box-shadow 140ms;background:var(--primary,#a1dfd1);color:var(--bg,#0b0e14);border-color:var(--primary,#a1dfd1);border-radius:8px;padding:12px 24px;min-width:180px;font-size:12px;box-shadow:none}.ds-primary:hover:not(:disabled){background:var(--primary-hover,#c7f0e5);border-color:var(--primary-hover,#c7f0e5);box-shadow:0 3px 14px #0002}.ds-primary:focus-visible{outline:2px solid var(--primary,#a1dfd1);outline-offset:3px}.ds-primary:active:not(:disabled){transform:scale(.98)}.ds-primary:disabled{opacity:.45;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary Action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Supporting action in review or confirmation.",
+      "html": "<button type=\"button\" class=\"ds-secondary\">选择 Steam 目录</button>",
+      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif);font-size:14px;font-weight:550;padding:9px 15px;border:1px solid transparent;border-radius:8px;cursor:pointer;transition:background-color 140ms,border-color 140ms,color 140ms,box-shadow 140ms;background:var(--surface,#151d25);color:var(--text,#eef5f2);border-color:var(--stroke-strong,#c7e4df42)}.ds-secondary:hover:not(:disabled){background:var(--surface-hover,#283741)}.ds-secondary:focus-visible{outline:2px solid var(--primary,#a1dfd1);outline-offset:3px}.ds-secondary:active:not(:disabled){transform:scale(.98)}.ds-secondary:disabled{opacity:.45;cursor:not-allowed}"
+    },
+    {
+      "name": "Quiet Action",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Supporting action in review or confirmation.",
+      "html": "<button type=\"button\" class=\"ds-quiet\">返回检查</button>",
+      "css": ".ds-quiet{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif);font-size:14px;font-weight:550;padding:9px 15px;border:1px solid transparent;border-radius:8px;cursor:pointer;transition:background-color 140ms,border-color 140ms,color 140ms,box-shadow 140ms;background:transparent;color:var(--muted,#a3b6b7)}.ds-quiet:hover:not(:disabled){background:var(--surface-2,#1d2832);color:var(--text,#eef5f2)}.ds-quiet:focus-visible{outline:2px solid var(--primary,#a1dfd1);outline-offset:3px}.ds-quiet:active:not(:disabled){transform:scale(.98)}.ds-quiet:disabled{opacity:.45;cursor:not-allowed}"
+    },
+    {
+      "name": "Review Search",
+      "kind": "input",
+      "refersTo": "search-field",
+      "description": "Search categories or displayed sample game names.",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"m16 16 4 4\"/></svg><input type=\"search\" aria-label=\"搜索分类或示例游戏\" placeholder=\"搜索分类或示例游戏\"/><kbd>Ctrl F</kbd></label>",
+      "css": ".ds-search{display:flex;align-items:center;gap:7px;max-width:440px;padding:8px 10px;border:1px solid var(--stroke,#c7e4df1c);border-radius:5px;background:var(--bg,#0b0e14);color:var(--muted,#a3b6b7);transition:background-color 140ms,border-color 140ms,color 140ms,box-shadow 140ms}.ds-search:focus-within{border-color:var(--primary,#a1dfd1);box-shadow:0 0 0 2px var(--primary-soft,#a1dfd116)}.ds-search svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}.ds-search input{min-width:0;width:100%;padding:0;font:12px var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif);border:0;outline:0;color:var(--text,#eef5f2);background:transparent;caret-color:var(--primary,#a1dfd1)}.ds-search input::placeholder{color:var(--muted-2,#9aadaf)}.ds-search kbd{white-space:nowrap;border:1px solid var(--stroke,#c7e4df1c);background:var(--surface,#151d25);border-radius:3px;padding:0 4px;font:8px/1.5 var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif);color:var(--muted-2,#9aadaf)}"
+    },
+    {
+      "name": "Workspace Navigation",
+      "kind": "nav",
+      "description": "光域 and generated review states; review is available after generation, including empty results.",
+      "html": "<nav class=\"ds-views\" aria-label=\"工作区视图\"><button type=\"button\" aria-pressed=\"true\">光域</button><button type=\"button\" aria-pressed=\"false\">分类预览</button></nav>",
+      "css": ".ds-views{display:flex;gap:18px;align-items:center;font-family:var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif)}.ds-views button{background:transparent;padding:10px 0;border:0;border-bottom:1px solid transparent;font:11px var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif);color:var(--muted-2,#9aadaf);border-radius:0;cursor:pointer;transition:background-color 140ms,border-color 140ms,color 140ms,box-shadow 140ms}.ds-views button[aria-pressed=true]{color:var(--text,#eef5f2);border-bottom-color:var(--primary,#a1dfd1)}.ds-views button:focus-visible{outline:2px solid var(--primary,#a1dfd1);outline-offset:3px}.ds-views button:active:not(:disabled){transform:scale(.98)}.ds-views button:disabled{opacity:.45;cursor:not-allowed}"
+    },
+    {
+      "name": "Sample Game Chip",
+      "kind": "chip",
+      "refersTo": "game-chip",
+      "description": "Informational game sample within an expanded review group.",
+      "html": "<span class=\"ds-chip\">星海漫游</span>",
+      "css": ".ds-chip{display:inline-block;padding:4px 8px;font:11px/1.6 var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif);border:1px solid var(--stroke,#c7e4df1c);border-radius:3px;background:var(--bg,#0b0e14);color:var(--muted,#a3b6b7)}"
+    },
+    {
+      "name": "Review Container",
+      "kind": "card",
+      "refersTo": "review-panel",
+      "description": "Flat container for searchable, selectable generated categories.",
+      "html": "<section class=\"ds-review\"><header class=\"ds-review-head\"><h2>分类预览</h2><p>检查每一个分类，留下适合你的整理方案。</p></header><label class=\"ds-review-row\"><input type=\"checkbox\" checked/><span>冒险游戏</span><span class=\"ds-count\">24</span></label></section>",
+      "css": ".ds-review{min-height:220px;background:var(--surface,#151d25);color:var(--text,#eef5f2);border:1px solid var(--stroke,#c7e4df1c);border-radius:14px;overflow:hidden;font:13px/1.6 var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif)}.ds-review-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--stroke,#c7e4df1c)}.ds-review-head h2{margin:0;font-size:14px;font-weight:500}.ds-review-head p{margin:0;color:var(--muted,#a3b6b7);font-size:11px}.ds-review-row{display:flex;align-items:center;gap:12px;min-height:46px;padding:5px 20px;font-size:12px;cursor:pointer;transition:background-color 140ms}.ds-review-row:hover{background:var(--bg,#0b0e14)}.ds-review-row input{width:14px;height:14px;margin:0;accent-color:var(--primary,#a1dfd1)}.ds-review-row input:focus-visible{outline:2px solid var(--primary,#a1dfd1);outline-offset:3px}.ds-count{margin-left:auto;color:var(--muted,#a3b6b7);font-size:10px;font-variant-numeric:tabular-nums}"
+    },
+    {
+      "name": "P5R / Paper Primary Action",
+      "kind": "button",
+      "refersTo": "p5r-button-primary",
+      "description": "Selected P5R alternate only. Paper action on the black frame; 光域 remains the default. Uses local P5R tokens with literal fallbacks.",
+      "html": "<button type=\"button\" class=\"ds-p5r-primary\">Generate preview</button>",
+      "css": ".ds-p5r-primary{min-height:44px;min-width:200px;padding:12px 24px;border:2px solid var(--royal-paper,#fff9ed);border-radius:0;background:var(--royal-paper,#fff9ed);color:var(--royal-ink,#101010);font:800 12px var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif);cursor:pointer;transform:skew(-7deg);transition:transform 160ms cubic-bezier(.16,1,.3,1)}.ds-p5r-primary:hover:not(:disabled){color:#fff;background:#ac0c22;border-color:#fff;transform:skew(-7deg) translateY(-2px)}.ds-p5r-primary:focus-visible{outline:2px solid currentColor;outline-offset:4px}.ds-p5r-primary:active:not(:disabled){transform:scale(.98)}.ds-p5r-primary:disabled{opacity:.45;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-p5r-primary{transition:none}}"
+    },
+    {
+      "name": "P5R / Generated Review Sheet",
+      "kind": "card",
+      "refersTo": "p5r-review-panel",
+      "description": "Selected P5R alternate only. Tonal review sheet replaces the poster on has-preview, including empty results. has-plan separately denotes selectable groups. Light mode maps review to warm paper while frame and rules stay black.",
+      "html": "<section class=\"ds-p5r-review\"><h2>Review collections</h2><label class=\"ds-p5r-search\"><input type=\"search\" aria-label=\"Search collections\" placeholder=\"Search collections\"/></label><label class=\"ds-p5r-row\"><input type=\"checkbox\" checked/><span>Adventure</span><span class=\"ds-p5r-count\">24</span></label></section>",
+      "css": ".ds-p5r-review{background:var(--surface,#1a1a1a);color:var(--text,#faf7f0);border:0;border-radius:0;min-height:200px;font:13px/1.6 var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif)}.ds-p5r-review h2{margin:0;padding:16px 20px 10px;font-size:17px;font-weight:800}.ds-p5r-search{display:flex;min-height:36px;margin:0 20px 12px;padding:0 10px;background:var(--bg,#121212);border:1px solid var(--stroke,#3c3938);border-radius:0}.ds-p5r-search:focus-within{outline:2px solid var(--primary,#ff6271);outline-offset:2px}.ds-p5r-search input{width:100%;min-width:0;background:transparent;color:var(--text,#faf7f0);caret-color:var(--primary,#ff6271);border:0;outline:0;font:12px var(--font, \"Segoe UI Variable Text\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif)}.ds-p5r-search input::placeholder{color:var(--muted-2,#aaa59e)}.ds-p5r-row{display:flex;align-items:center;gap:12px;min-height:46px;padding:0 20px;border-top:1px solid var(--stroke,#3c3938);cursor:pointer}.ds-p5r-row:hover{background:var(--primary-soft,#402028)}.ds-p5r-row input{accent-color:var(--primary,#ff6271)}.ds-p5r-row input:focus-visible{outline:2px solid currentColor;outline-offset:4px}.ds-p5r-count{margin-left:auto;background:var(--surface-2,#262626);padding:0 6px;font-size:11px;font-weight:700}"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Library You Can Step Into",
+    "overview": "Full-window original triangular relief, braided particle currents and a resonant mesh under legible graphite operations. Ships in v1.1.2; earlier v1.1.0/v1.1.1 releases were withdrawn.",
+    "keyCharacteristics": [
+      "Three scene choices with mesh / point / line topology, saved locally.",
+      "Actual GPU depth and material detail with Canvas2D / SVG fallback.",
+      "Native typography and readable tonal operation panels.",
+      "Review freezes and dims scenery; explicit write guards remain."
+    ],
+    "rules": [
+      {
+        "name": "The Wayfinding Rule",
+        "body": "Use sea-glass for action, selection and focus; keep iris and copper within the decorative light field.",
+        "section": "colors"
+      },
+      {
+        "name": "The Alternate Boundary Rule",
+        "body": "Apply P5R red, paper cuts and display typography only inside the selected P5R appearance; 光域 keeps its sea-glass light-field identity.",
+        "section": "colors"
+      },
+      {
+        "name": "The Native Type Rule",
+        "body": "Use the existing system stack throughout 光域, including its invitation and brand subtitle.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Frame Rule",
+        "body": "Keep operating panels stationary; pause or reduce motion on request and freeze/dim scenery during review.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Persona Motion Rule",
+        "body": "Simple flat fan profile cutouts replace detailed key art. P3R uses blue/white, broad underwater light and two circular windows revealing the hero; P5R uses black/white/red and a sharp comic star impact. Effects are clipped to the hero, away from controls. Pause/reduced motion, hidden windows, offscreen scenes and generated review stop frames; visible P3R water may continue at idle.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do use sea-glass for action, selection and visible keyboard focus.",
+      "Do keep 光域 typography native and leave an open text area over the spatial field.",
+      "Do preserve disabled states, semantic status colors and the explicit preview/write distinction.",
+      "Do retain offline rendering, a matching SVG still, pause/change-field controls and reduced-motion behavior.",
+      "Do scope P5R styling to its selected alternate, retain its local display font and show review after every generated result, including empty plans."
+    ],
+    "donts": [
+      "Don't restore the superseded centered square-grid composition as 光域's identity.",
+      "Don't copy Code-Codex or React Bits source or artwork assets.",
+      "Don't retain light-field animation behind generated review or schedule continuous idle or hidden frames.",
+      "Don't promote tiny incidental labels into a reusable density standard.",
+      "Don't require external services or a Node runtime for the desktop interface, or introduce game logos or extracted game assets. Keep requested fan portraits locally bundled with provenance."
+    ]
+  }
+}

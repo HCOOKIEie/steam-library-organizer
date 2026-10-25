@@ -9,16 +9,20 @@
     theme = window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   }
   document.documentElement.dataset.theme = theme;
-  let appearance = 'p3r';
+  let appearance = 'vault';
   let motion = '';
   try {
     const savedAppearance = window.localStorage.getItem('steam-organizer-appearance');
-    if (['calm', 'p3r', 'traces'].includes(savedAppearance)) appearance = savedAppearance;
+    if (savedAppearance === 'traces') {
+      appearance = 'p5r';
+      window.localStorage.setItem('steam-organizer-appearance', 'p5r');
+    } else if (['vault', 'calm', 'p3r', 'p5r'].includes(savedAppearance)) appearance = savedAppearance;
     motion = window.localStorage.getItem('steam-organizer-motion') || '';
   } catch (_) {}
   document.documentElement.dataset.appearance = appearance;
   document.documentElement.dataset.motion = motion === 'reduced' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full';
   document.documentElement.style.colorScheme = theme;
+  document.documentElement.dataset.vaultView = 'collection';
   const themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.content = appearance === 'p3r' ? '#0654e8' : appearance === 'traces' ? (theme === 'light' ? '#eaf1ef' : '#101f27') : (theme === 'light' ? '#f8f9fb' : '#181a20');
+  if (themeColor) themeColor.content = appearance === 'vault' ? (theme === 'light' ? '#eef2f1' : '#090d10') : appearance === 'p3r' ? '#0654e8' : appearance === 'p5r' ? (theme === 'light' ? '#e21d30' : '#c90d25') : (theme === 'light' ? '#f5f5f7' : '#161618');
 })();

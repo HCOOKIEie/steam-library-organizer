@@ -1,4 +1,4 @@
-# v1.1.0 Release Checklist
+# v1.1.2 Release Checklist
 
 本清单用于构建面向 Windows 10/11 x64 的正式发布包。目标是让构建结果只包含应用真正需要的组件，避免从 Anaconda、用户级 `site-packages` 或日常开发环境中误收集模块。
 
@@ -52,14 +52,15 @@
 - [ ] 使用仓库脚本完成安全清理、隔离环境、测试、打包和哈希生成：
 
   ```powershell
-  powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.1.0 -Layout Both
+  powershell -ExecutionPolicy Bypass -File .\scripts\build_release.ps1 -Version 1.1.2 -Layout Both
   ```
 
-- [ ] 推荐分发 `SteamLibraryOrganizer-1.1.0-win-x64-portable.zip`；压缩包内入口名为 `SteamLibraryOrganizer.exe`。`SteamLibraryOrganizer-1.1.0-win-x64.exe` 是单文件便携备选。
-- [ ] 解压并核对 portable ZIP，确认 `README.md`、`THIRD_PARTY_NOTICES.md` 与完整的 `THIRD_PARTY_LICENSES/` 均已包含。
+- [ ] 推荐分发 `SteamLibraryOrganizer-1.1.2-win-x64-portable.zip`；压缩包内入口名为 `SteamLibraryOrganizer.exe`。`SteamLibraryOrganizer-1.1.2-win-x64.exe` 是单文件便携备选。
+- [ ] 解压并核对 portable ZIP，确认 `README.md`、项目级 `LICENSE`、`THIRD_PARTY_NOTICES.md` 与完整的 `THIRD_PARTY_LICENSES/` 均已包含。
 - [ ] 检查 `.build\pyinstaller-release\onefile\SteamLibraryOrganizer\` 与 `.build\pyinstaller-release\onedir\SteamLibraryOrganizer\` 下的 `Analysis-00.toc`、`EXE-00.toc` 和构建日志：所有 Python 包必须来自 `.venv-release` 或 CPython 3.13.2 标准库；不得出现 Anaconda、用户级 `AppData\Roaming\Python\...\site-packages`、旧虚拟环境或无关项目路径。
 - [ ] 确认产物为 x64，并确认未意外打包 Qt、CEF、测试框架、科学计算套件等未使用组件；同时确认 tkinter 兼容回退所需模块完整保留。
 - [ ] 构建脚本会为发布目录生成 `SHA256SUMS.txt`；再次用 `Get-FileHash` 人工抽查 portable ZIP 和单文件 EXE。
+- [ ] `-Layout Both` 自动调用 `scripts/verify_release.py` 核对两种包中的资源与源码、版本和 ZIP 完整性，生成 `BUILD-VERIFICATION.json`；单独检查可运行 `.\.venv-release\Scripts\python.exe scripts/verify_release.py --version 1.1.2`。
 
 ## 5. 干净系统冒烟测试
 
@@ -75,24 +76,24 @@
 - [ ] 浅色/深色、缩放、键盘焦点以及系统“减少动态效果”均无明显回归。
 - [ ] 1220×840 默认窗口、980×680 最小窗口和 125%/150% 系统缩放下，设置与预览可滚动，底部操作可达；原生标题栏与界面主题一致。
 - [ ] 三组预设、设置持久化、搜索无结果、筛选后批量勾选、切换目录清空旧预览及预览生成失败均符合预期。
-- [ ] RELOAD / 行记 / 简约外观均可使用，分别检查亮色、深色与 980×680 最小窗口；切换外观不清空搜索、规则或预览勾选。关闭后重启保留外观选择。
-- [ ] 入场转场会自行结束，装饰层不拦截输入；“减少动态效果”和系统设置能停止动画及视差。原生冻结包包含 `p3r.css`、`traces.css` 与 `appearance.js`。
+- [ ] 陈列室 / RELOAD / P5R / 简约外观均可使用，分别检查亮色、深色与 980×680 最小窗口；切换外观不清空搜索、规则或预览勾选。关闭后重启保留外观选择。
+- [ ] 入场转场会自行结束，装饰层不拦截输入；“减少动态效果”和系统设置能停止动画及视差。原生冻结包包含 `p3r.css`、`p5r.css`、`vault.css`、`appearance.js`、`vault.js`、`persona-motion.js`、`persona-motion.css`、两幅本地人物插图及 Anton / Barlow 字体与许可。P3R 双圆转场在暂停、离屏和审阅时清除遮罩。
 - [ ] 离线预览始终显示“示例数据”，不能写入、恢复或打开真实 Steam 目录；不得将其当成可整理真实数据的桌面版分发。
 - [ ] `%LOCALAPPDATA%\SteamLibraryOrganizer\steam_modern.log` 不含密钥或令牌。日志可能包含本机路径、Steam 账号标识和错误堆栈；提醒用户反馈问题前先检查并脱敏，不要直接公开上传。
 
-Windows on ARM、32 位 Windows、Windows 7/8.1 不在 v1.1.0 支持范围内；如仅在兼容层上偶然可运行，也不要在 Release Notes 中承诺支持。
+Windows on ARM、32 位 Windows、Windows 7/8.1 不在 v1.1.2 支持范围内；如仅在兼容层上偶然可运行，也不要在 Release Notes 中承诺支持。
 
 ## 6. 发布内容与说明
 
-- [ ] GitHub Release 包含推荐的 portable ZIP、单文件 EXE 备选、`SteamLibraryOrganizer-1.1.0-third-party-licenses.zip`、`SHA256SUMS.txt` 与 `BUILD-DEPENDENCIES.txt`；portable ZIP 内也包含 README 和完整第三方许可。
+- [ ] GitHub Release 包含推荐的 portable ZIP、单文件 EXE 备选、`SteamLibraryOrganizer-1.1.2-third-party-licenses.zip`、`SHA256SUMS.txt` 与 `BUILD-DEPENDENCIES.txt`；portable ZIP 内也包含 README 和完整第三方许可。
 - [ ] Release 页面明确提醒：下载单文件 EXE 时，应同时下载并保留同版本的第三方许可包；portable ZIP 已内置这些文件。
 - [ ] `THIRD_PARTY_NOTICES.md` 中的版本与 `requirements-lock.txt` 以及最终 TOC 一致。
 - [ ] 不把 `.venv-release/`、`build/`、`dist/`、`steam_appinfo_cache.json`、真实备份或日志打入发布包。
-- [ ] Release 标题和标签使用 `v1.1.0`；注明“Windows 10/11 x64”“新界面需要 WebView2，缺失时回退兼容界面”“未签名，可能出现 SmartScreen 提醒”。
+- [ ] Release 标题和标签使用 `v1.1.2`；注明“Windows 10/11 x64”“新界面需要 WebView2，缺失时回退兼容界面”“未签名，可能出现 SmartScreen 提醒”。
 - [ ] 明确声明本项目不是 Valve/Steam 官方产品；不要使用暗示官方授权或背书的措辞。
-- [ ] 仓库根目录没有项目级 `LICENSE` 时，只称“source-available（源码公开可查看）”，不要声称项目已采用 OSI 认可的 MIT、Apache-2.0、GPL 等开源许可证。第三方组件的许可证不等于本项目许可证。
-- [ ] `legacy/` 仅用于历史追溯；发布说明提醒用户不要运行旧版脚本处理真实数据。
+- [ ] 项目采用 MIT 许可证；确认 portable ZIP 和单文件 EXE 配套许可包均包含根目录 `LICENSE`，并保留第三方组件各自的许可文件与声明。
+- [ ] 正式产物只存放在 `dist/release/` 并上传 Release；不向 Git 提交 EXE、ZIP、构建缓存或旧版入口。
 
-## v1.1.0 建议发布说明
+## 发布说明
 
-> 本次更新重做双栏工作台与亮色/深色外观，新增三组分类预设、设置记忆、搜索结果提示及筛选后批量勾选，并修复旧预览在失败后可能显示为可写入的问题。继续提供离线扫描、写入前备份和 WebView2 缺失时的兼容回退。正式支持 Windows 10/11 x64。程序尚未代码签名，首次运行可能出现 SmartScreen 提醒；请从本仓库 Release 下载并核对 SHA-256。本工具是社区个人项目，与 Valve 或 Steam 官方无隶属、授权或背书关系。
+本版说明见 [v1.1.2](releases/v1.1.2.md)。
