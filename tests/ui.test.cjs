@@ -21,7 +21,7 @@ const serverState = () => ({
 });
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
-async function setup(t, { getState, makePlan, apply, preferences, theme, appearance, motion, particlesPaused, personaPaused, spaceScene, gpu = false, canvas = false, selectionGeometry = false, systemReducedMotion = false, unavailableStorage } = {}) {
+async function setup(t, { getState, makePlan, apply, localGames, preferences, theme, appearance, motion, particlesPaused, personaPaused, spaceScene, gpu = false, canvas = false, selectionGeometry = false, systemReducedMotion = false, unavailableStorage } = {}) {
   const dom = new JSDOM(html, { url: 'https://organizer.test/', runScripts: 'outside-only', pretendToBeVisual: true });
   t.after(() => dom.window.close());
   const { window } = dom;
@@ -92,10 +92,16 @@ async function setup(t, { getState, makePlan, apply, preferences, theme, appeara
     get_state: getState || (async () => serverState()),
     make_plan: makePlan || (async () => ({ plan_id: 'example-plan', groups, summary: {} })),
     apply: apply || (async () => { throw new Error('Test writes are disabled'); }),
+    ...localGames,
   }};
+  window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  window.HTMLDialogElement.prototype.close = function () { this.open = false; this.dispatchEvent(new window.Event('close')); };
   window.eval(fs.readFileSync(path.join(ui, 'theme-bootstrap.js'), 'utf8'));
   window.eval(fs.readFileSync(path.join(ui, 'appearance.js'), 'utf8'));
   window.eval(script);
+  window.eval(fs.readFileSync(path.join(ui, 'local-games.js'), 'utf8'));
+  window.eval(fs.readFileSync(path.join(ui, 'library-manager.js'), 'utf8'));
+  window.eval(fs.readFileSync(path.join(ui, 'artwork.js'), 'utf8'));
   window.eval(fs.readFileSync(path.join(ui, 'vault.js'), 'utf8'));
   window.eval(fs.readFileSync(path.join(ui, 'persona-motion.js'), 'utf8'));
   window.eval(fs.readFileSync(path.join(ui, 'calm.js'), 'utf8'));
@@ -116,6 +122,122 @@ test('initial scan enables preview, masks the account, and keeps write hidden', 
   assert.equal(window.document.querySelector('[aria-current="step"]').dataset.step, '2');
 });
 
+function localGameScan() {
+  return { plan_id: 'local-plan', candidates: [
+    { id: 'known', name: '原神', exe: 'D:\\Games\\YuanShen.exe', start_dir: 'D:\\Games', args: '', confidence: 'recognized', existing: false, source: '目录', reason: '已识别游戏' },
+    { id: 'review', name: '<img src=x onerror=alert(1)>', exe: 'D:\\Games\\Other.exe', start_dir: 'D:\\Games', args: '--channel CN', confidence: 'review', existing: false, source: '目录', reason: '请确认' },
+    { id: 'existing', name: '已添加', exe: 'D:\\Games\\Existing.exe', start_dir: 'D:\\Games', args: '', confidence: 'recognized', existing: true, source: '目录', reason: '已识别游戏' },
+  ], warnings: [] };
+}
+
+test('local game discovery selects only recognized new games and treats names as text', async t => {
+  const { $, window } = await setup(t, { localGames: { scan_local_games: async () => localGameScan() } });
+  $('local-games-open').click(); $('local-games-scan').click(); await settle();
+  assert.equal($('local-games-dialog').open, true);
+  const checks = [...$('local-games-list').querySelectorAll('input[type=checkbox]')];
+  assert.deepEqual(checks.map(x => x.checked), [true, false, false]);
+  assert.equal(checks[2].disabled, true);
+  assert.equal($('local-games-list').querySelector('img'), null);
+  assert.equal($('local-games-import').disabled, false);
+  $('local-games-search').value = 'Other.exe';
+  $('local-games-search').dispatchEvent(new window.Event('input'));
+  $('local-games-select').click();
+  assert.equal($('local-games-selection').textContent, '已选 2 / 2');
+  $('local-games-close').click();
+  assert.equal(window.document.activeElement.id, 'local-games-open');
+});
+
+test('local import requires confirmation, passes selected IDs and rename, and supports undo', async t => {
+  const calls = [];
+  const { $, window } = await setup(t, { localGames: {
+    scan_local_games: async () => localGameScan(),
+    import_local_games: async payload => { calls.push(payload); return { added: 1, backup: 'backup.json' }; },
+    undo_local_import: async () => ({ restored: 'backup.json' }),
+  } });
+  $('local-games-open').click(); $('local-games-scan').click(); await settle();
+  const name = $('local-games-list').querySelector('.local-game-details input');
+  name.value = '原神 · 国服'; name.dispatchEvent(new window.Event('input'));
+  $('local-games-import').click();
+  assert.equal(calls.length, 0);
+  assert.equal($('local-games-confirm').hidden, false);
+  $('local-games-confirm-action').click(); await settle();
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].selected.join(','), 'known');
+  assert.equal(calls[0].names.known, '原神 · 国服');
+  assert.equal(calls[0].plan_id, 'local-plan');
+  assert.equal($('local-games-import').disabled, true);
+  assert.match($('local-games-status').textContent, /已导入 1/);
+  $('local-games-undo').click(); $('local-games-confirm-action').click(); await settle();
+  assert.match($('local-games-status').textContent, /已恢复/);
+});
+
+test('merged local games stay in one row and selecting a launch variant changes only its submitted ID', async t => {
+  const scan = localGameScan(), calls = [];
+  const primary = { ...scan.candidates[0] };
+  const alternate = { ...primary, id: 'known-direct', exe: 'F:\\Game\\YuanShen.exe', args: '--channel CN', source: '安装目录' };
+  scan.candidates[0].alternatives = [primary, alternate];
+  scan.merged = 1; scan.locations = ['D:\\Games', 'F:\\Game']; scan.partial_roots = 1; scan.incomplete_locations = ['F:\\Game'];
+  const { $, window } = await setup(t, { localGames: {
+    scan_local_games: async () => scan,
+    import_local_games: async payload => { calls.push(payload); return { added: 1, backup: 'backup.json' }; },
+  } });
+  $('local-games-open').click(); $('local-games-scan').click(); await settle();
+  assert.equal($('local-games-list').querySelectorAll('article').length, 3);
+  assert.match($('local-games-status').textContent, /合并 1 个重复入口/);
+  assert.match($('local-games-coverage').textContent, /2 个位置.*部分目录未扫完/);
+  assert.match($('local-games-coverage').querySelector('ul').textContent, /F:\\Game（未扫完/);
+  let select = $('local-games-list').querySelector('select');
+  select.value = alternate.id; select.dispatchEvent(new window.Event('change')); await settle();
+  assert.match($('local-games-list').querySelector('.local-game-path').textContent, /F:\\Game/);
+  assert.equal($('local-games-list').querySelector('details').open, true);
+  assert.equal(window.document.activeElement.tagName, 'SELECT');
+  assert.equal($('local-games-selection').textContent, '已选 1 / 2');
+  $('local-games-import').click(); $('local-games-confirm-action').click(); await settle();
+  assert.equal(calls[0].selected.join(','), 'known-direct');
+});
+
+test('already-added local games lock all alternative launch modes', async t => {
+  const scan = localGameScan();
+  scan.candidates = [{ ...scan.candidates[2], alternatives: [{ ...scan.candidates[2] }, { ...scan.candidates[2], id: 'other-existing' }] }];
+  const { $ } = await setup(t, { localGames: { scan_local_games: async () => scan } });
+  $('local-games-open').click(); $('local-games-scan').click(); await settle();
+  assert.equal($('local-games-list').querySelector('select').disabled, true);
+  $('local-games-select').click();
+  assert.equal($('local-games-import').disabled, true);
+});
+
+test('local import errors retain confirmation and unlock controls for retry', async t => {
+  const { $ } = await setup(t, { localGames: {
+    scan_local_games: async () => localGameScan(),
+    import_local_games: async () => { throw new Error('Steam 正在运行'); },
+  } });
+  $('local-games-open').click(); $('local-games-scan').click(); await settle();
+  $('local-games-import').click(); $('local-games-confirm-action').click(); await settle();
+  assert.match($('local-games-error').textContent, /Steam 正在运行/);
+  assert.equal($('local-games-confirm').hidden, false);
+  assert.equal($('local-games-confirm-action').disabled, false);
+  $('local-games-back').click();
+  assert.equal($('local-games-results').hidden, false);
+});
+
+test('local scanning can be cancelled and blocks global organizer shortcuts', async t => {
+  let resolveScan, plans = 0, cancelled = 0;
+  const { $, window } = await setup(t, { makePlan: async () => { plans++; return { groups: [] }; }, localGames: {
+    scan_local_games: () => new Promise(resolve => { resolveScan = resolve; }),
+    cancel_local_scan: async () => { cancelled++; resolveScan({ candidates: [], cancelled: true, plan_id: null }); return {}; },
+  } });
+  $('local-games-open').click();
+  window.document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
+  assert.equal(plans, 0);
+  $('local-games-scan').click(); await settle();
+  assert.equal($('local-games-close').disabled, true);
+  assert.equal($('local-games-cancel').hidden, false);
+  $('local-games-cancel').click(); await settle();
+  assert.equal(cancelled, 1);
+  assert.equal($('local-games-import').disabled, true);
+  assert.equal($('local-games-close').disabled, false);
+});
+
 function selectionBox(track) {
   const slider = track.querySelector('.calm-selection');
   assert.ok(slider, 'The functional selection indicator is present');
@@ -124,6 +246,116 @@ function selectionBox(track) {
   assert.ok(Number.isFinite(x) && Number.isFinite(scale), 'Selection geometry is finite');
   return { x, width: parseFloat(slider.style.width) * scale };
 }
+
+function artworkFixture() {
+  return { account: 'art-account', revision: 'art-revision', games: [
+    { id: 'new-game', name: '<img src=x onerror=alert(1)>', present: { cover: true, hero: false, logo: false, wide: false } },
+    { id: 'older-game', name: 'Older Game', present: { cover: false, hero: false, logo: false, wide: false } },
+  ] };
+}
+
+test('artwork uses reviewed server image plans, escapes titles and preserves existing art by default', async t => {
+  const calls = [];
+  const { $, window } = await setup(t, { localGames: { manage_artwork: async (action, payload) => {
+    calls.push({ action, payload });
+    if (action === 'load') return artworkFixture();
+    if (action === 'current') return { images: {} };
+    if (action === 'search') return { matches: [{ id: 'match', name: '<script>bad</script>', provider: 'steam', exact: true }] };
+    if (action === 'preview') return { plan_id: 'art-plan', name: 'Matched Game', provider: 'steam', images: Object.fromEntries(['cover','hero','logo','wide'].map(kind => [kind, { preview: 'data:image/png;base64,YQ==', width: 600, height: 900 }])) };
+    if (action === 'apply') return { saved: ['hero','logo','wide'], skipped: [], backup: 'backup.json' };
+    throw new Error('Unexpected action');
+  } } });
+  $('artwork-open').click(); await settle(); await settle();
+  assert.equal($('artwork-dialog').open, true);
+  assert.equal($('artwork-games').querySelector('img'), null);
+  assert.equal(calls.filter(x => ['apply','auto','undo'].includes(x.action)).length, 0);
+  $('artwork-search-form').dispatchEvent(new window.Event('submit', { cancelable: true })); await settle();
+  assert.equal($('artwork-matches').querySelector('script'), null);
+  $('artwork-matches').querySelector('button').click(); await settle();
+  assert.equal($('artwork-images').querySelectorAll('img').length, 4);
+  assert.deepEqual([...$('artwork-images').querySelectorAll('input')].map(x => x.checked), [false,true,true,true]);
+  $('artwork-apply').click(); await settle();
+  const applied = calls.find(x => x.action === 'apply').payload;
+  assert.equal(applied.account, 'art-account'); assert.equal(applied.revision, 'art-revision');
+  assert.equal(applied.game_id, 'new-game'); assert.equal(applied.plan_id, 'art-plan'); assert.equal(applied.replace, false);
+  assert.equal(applied.selected.join(','), 'hero,logo,wide');
+  assert.match($('artwork-status').textContent, /保存 3 张/);
+  $('artwork-key').value = 'not-persisted-api-key';
+  $('artwork-close').click();
+  assert.equal($('artwork-key').value, '');
+  assert.ok(!Object.values(window.localStorage).some(x => String(x).includes('not-persisted-api-key')));
+});
+
+test('import automatically fills only newly imported game artwork after closing the import dialog', async t => {
+  const autos = [];
+  const { $ } = await setup(t, { localGames: {
+    scan_local_games: async () => localGameScan(),
+    import_local_games: async () => ({ added: 1, backup: 'backup.json', appids: ['new-game'] }),
+    manage_artwork: async (action, payload) => {
+      if (action === 'load') return artworkFixture();
+      if (action === 'current') return { images: {} };
+      if (action === 'auto') { autos.push(payload.game_id); return { status: 'matched', saved: ['cover','hero','logo','wide'] }; }
+      throw new Error('Unexpected action');
+    },
+  } });
+  $('local-games-open').click(); $('local-games-scan').click(); await settle();
+  $('local-games-import').click();
+  assert.equal($('local-games-artwork').checked, true);
+  $('local-games-confirm-action').click(); await settle(); await settle(); await settle();
+  assert.equal($('local-games-dialog').open, false);
+  assert.equal($('artwork-dialog').open, true);
+  assert.deepEqual(autos, ['new-game']);
+  assert.match($('artwork-status').textContent, /补齐 4 张图片/);
+});
+
+test('artwork write errors retain the image plan for retry and restore dialog controls', async t => {
+  const { $, window } = await setup(t, { localGames: { manage_artwork: async action => {
+    if (action === 'load') return artworkFixture();
+    if (action === 'current') return { images: {} };
+    if (action === 'search') return { matches: [{ id: 'match', name: 'Game', provider: 'steam', exact: true }] };
+    if (action === 'preview') return { plan_id: 'plan', name: 'Game', provider: 'steam', images: { hero: { preview: 'data:image/png;base64,YQ==', width: 100, height: 100 } } };
+    if (action === 'apply') throw new Error('Steam 正在运行，请完全退出');
+    throw new Error('Unexpected action');
+  } } });
+  $('artwork-open').click(); await settle(); await settle();
+  $('artwork-search-form').dispatchEvent(new window.Event('submit', { cancelable: true })); await settle();
+  $('artwork-matches').querySelector('button').click(); await settle();
+  $('artwork-apply').click(); await settle();
+  assert.match($('artwork-error').textContent, /Steam 正在运行/);
+  assert.equal($('artwork-apply').disabled, false);
+  assert.equal($('artwork-close').disabled, false);
+  assert.equal($('artwork-images').querySelectorAll('img').length, 1);
+  window.document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
+  assert.equal($('sheet').hidden, true);
+});
+
+test('local artwork supports folder search and reviewed per-role image choices', async t => {
+  const calls = [];
+  const { $, window } = await setup(t, { localGames: { manage_artwork: async (action, payload) => {
+    calls.push({ action, payload });
+    if (action === 'load') return artworkFixture();
+    if (action === 'current') return { images: {} };
+    if (action === 'search') return { matches: [{ id: 'local-match', name: '本地图片', provider: 'local' }] };
+    if (action === 'preview') return { plan_id: 'local-plan', name: 'Game', provider: 'local',
+      images: { cover: { preview: 'data:image/png;base64,YQ==', width: 600, height: 900 } },
+      local_choices: { cover: [{ name: 'poster-a.png', width: 600, height: 900 }, { name: 'poster-b.png', width: 300, height: 450 }] } };
+    throw new Error('Unexpected action');
+  } } });
+  $('artwork-open').click(); await settle(); await settle();
+  $('artwork-provider').value = 'local'; $('artwork-provider').dispatchEvent(new window.Event('change'));
+  assert.equal($('artwork-local-folder').hidden, false);
+  $('artwork-folder').value = 'D:\\Game\\LauncherArt';
+  $('artwork-search-form').dispatchEvent(new window.Event('submit', { cancelable: true })); await settle();
+  assert.equal(calls.at(-1).payload.folder, 'D:\\Game\\LauncherArt');
+  $('artwork-matches').querySelector('button').click(); await settle();
+  const picker = $('artwork-images').querySelector('select');
+  assert.equal(picker.options.length, 2);
+  picker.value = '1'; picker.dispatchEvent(new window.Event('change')); await settle();
+  assert.equal(calls.at(-1).payload.local_selection.cover, 1);
+  assert.equal(calls.some(x => x.action === 'apply'), false);
+  $('artwork-games').lastElementChild.click(); await settle();
+  assert.equal($('artwork-folder').value, '', 'A chosen folder must not carry over to another game');
+});
 
 function assertSelectionAt(track, button) {
   const box = selectionBox(track);
@@ -274,6 +506,24 @@ test('presets update rules, invalidate the preview, and survive reload', async t
   assert.equal(second.window.document.querySelector('[data-mode="recent"]').getAttribute('aria-pressed'), 'true');
 });
 
+test('series rule participates in reviewed plans and persists on reload', async t => {
+  const requests = [];
+  const first = await setup(t, { makePlan: async payload => {
+    requests.push(payload);
+    return { plan_id: 'series-plan', groups: [{ id: 'series:女神异闻录', mode: 'series', name: '系列 · 女神异闻录', count: 2, appids: [1, 2], sample: ['Persona 3 Reload', 'Persona 5 Royal'] }], summary: {} };
+  } });
+  const rule = first.window.document.querySelector('[data-mode="series"]');
+  assert.ok(rule); assert.equal(rule.getAttribute('aria-pressed'), 'false');
+  rule.click(); await first.plan();
+  assert.ok(requests[0].modes.includes('series'));
+  assert.match(first.$('groups').textContent, /系列 · 女神异闻录/);
+  const preferences = first.window.localStorage.getItem('steam-organizer-preferences-v1');
+  const second = await setup(t, { preferences });
+  assert.equal(second.window.document.querySelector('[data-mode="series"]').getAttribute('aria-pressed'), 'true');
+  rule.click();
+  assert.equal(first.$('apply-btn').hidden, true, 'Changing series selection invalidates the old plan');
+});
+
 test('search shows an empty result and bulk selection preserves hidden rows', async t => {
   const { $, window, run, plan } = await setup(t);
   await plan();
@@ -406,6 +656,8 @@ test('the exported offline artifact boots with sample data and rejects writes', 
   assert.ok(!/<script[^>]+src=/.test(previewHtml));
   assert.ok(!/<link[^>]+rel="stylesheet"/.test(previewHtml));
   assert.ok(Buffer.byteLength(previewHtml, 'utf8') < 2_000_000, 'Keep the inlined desktop page below the WebView2 NavigateToString limit');
+  assert.ok(Buffer.byteLength(previewHtml, 'utf16le') < 2_097_152, 'WebView2 also bounds the UTF-16 document size');
+  assert.ok(!previewHtml.includes('"art/app-icon.png"'), 'The logo and favicon are embedded offline');
   const dom = new JSDOM(previewHtml, {
     url: 'https://offline-preview.test/', runScripts: 'dangerously', pretendToBeVisual: true,
     beforeParse(window) {
@@ -414,6 +666,8 @@ test('the exported offline artifact boots with sample data and rejects writes', 
     },
   });
   t.after(() => dom.window.close());
+  assert.match(dom.window.document.querySelector('.brand-mark img').src, /^data:image\/png;base64,/);
+  assert.match(dom.window.document.querySelector('link[rel="icon"]').href, /^data:image\/png;base64,/);
   await settle();
   assert.equal(dom.window.document.documentElement.dataset.appearance, 'p5r');
   assert.equal(dom.window.document.getElementById('demo-badge').hidden, false);
@@ -540,10 +794,7 @@ test('Lightfield home and review navigation preserve selection, search and stale
   const root = window.document.documentElement;
   assert.equal(root.dataset.vaultView, 'collection');
   assert.equal($('vault-review-btn').disabled, true);
-  assert.ok($('vault-art-fallback').querySelectorAll('path').length > 40);
-  const original = $('vault-art-fallback').innerHTML;
-  $('vault-shuffle').click();
-  assert.notEqual($('vault-art-fallback').innerHTML, original);
+  assert.ok($('orbit-wheel'));
   await plan();
   assert.equal(root.dataset.vaultView, 'review');
   assert.equal($('vault-plan-count').textContent, '3');
@@ -561,164 +812,78 @@ test('Lightfield home and review navigation preserve selection, search and stale
   assert.equal($('stale-banner').hidden, false);
 });
 
-test('Lightfield light/dark mode and GPU-free fallback work without a rendering library', async t => {
-  const { window, $ } = await setup(t, { theme: 'light', systemReducedMotion: true });
-  assert.equal(window.document.querySelector('meta[name="theme-color"]').content, '#eef2f1');
-  assert.ok($('vault-art-fallback').querySelector('svg'));
-  $('quick-theme-btn').click();
-  assert.equal(window.document.querySelector('meta[name="theme-color"]').content, '#090d10');
-  assert.equal(window.document.documentElement.dataset.motion, 'reduced');
-  assert.equal($('vault-pause').disabled, true);
+test('wheel loads real library rows, filters, and opens the selected game without writes', async t => {
+  const calls = [];
+  const { $, window } = await setup(t, { systemReducedMotion: true, localGames: { manage_library: async (action, payload) => { calls.push({ action, payload }); return managedLibrary(); } } });
+  await settle();
+  assert.equal($('orbit-total').textContent, '3 个游戏');
+  $('orbit-next').click();
+  assert.equal($('orbit-title').textContent, '<img src=x onerror=alert(1)>');
+  assert.equal($('orbit-title').querySelector('img'), null);
+  $('orbit-manage').click(); await settle();
+  assert.equal($('library-manager-dialog').open, true);
+  assert.equal($('library-manager-search').value, '<img src=x onerror=alert(1)>');
+  assert.ok(calls.every(x => x.action === 'load'));
+  $('library-manager-close').click();
+  $('orbit-installed').checked = true; $('orbit-installed').dispatchEvent(new window.Event('change'));
+  assert.equal($('orbit-count').textContent, '1 项');
+  assert.equal($('orbit-next').disabled, true);
+  $('orbit-search').value = 'not present'; $('orbit-search').dispatchEvent(new window.Event('input'));
+  assert.equal($('orbit-manage').disabled, true);
+  assert.equal($('orbit-cards').children.length, 0);
 });
 
-test('spatial geometry responds to pointer and keyboard, then stops in review and on hidden pages', async t => {
-  const { window, $, animation, plan } = await setup(t, { canvas: true, theme: 'dark' });
-  animation.step(0);
-  assert.equal($('vault-art').dataset.renderer, 'canvas');
-  const resting = JSON.stringify(animation.strokes);
-  const restingX = animation.strokes.map(stroke => stroke.points.map(point => point[0]));
-  const stage = window.document.querySelector('.stage');
-  stage.dispatchEvent(new window.MouseEvent('pointermove', { clientX: 450, clientY: 250, bubbles: true }));
-  animation.step(40);
-  assert.notEqual(JSON.stringify(animation.strokes), resting);
-  assert.notDeepEqual(animation.strokes.map(stroke => stroke.points.map(point => point[0])), restingX,
-    'Pointer interaction changes geometry independently of the ambient vertical drift');
-  stage.dispatchEvent(new window.MouseEvent('pointerleave'));
-  window.document.querySelector('.vault-exhibit').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-  animation.step(340);
-  assert.notEqual(JSON.stringify(animation.strokes), resting, 'Keyboard activation deforms the contours');
-  assert.equal(animation.rects.length, 0, 'The light field draws no square grid');
+test('wheel keyboard wraps, pointer drag advances, and trackpad momentum advances once', async t => {
+  const { $, window } = await setup(t, { systemReducedMotion: true, localGames: { manage_library: async () => managedLibrary() } });
+  await settle();
+  const wheel = $('orbit-wheel');
+  wheel.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }));
+  assert.equal($('orbit-index').textContent, '03 / 3');
+  wheel.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+  wheel.dispatchEvent(new window.WheelEvent('wheel', { deltaY: 120, cancelable: true }));
+  wheel.dispatchEvent(new window.WheelEvent('wheel', { deltaY: 120, cancelable: true }));
+  assert.equal($('orbit-index').textContent, '02 / 3');
+  wheel.setPointerCapture = () => {}; wheel.hasPointerCapture = () => false;
+  wheel.dispatchEvent(new window.MouseEvent('pointerdown', { button: 0, clientX: 200, clientY: 100 }));
+  wheel.dispatchEvent(new window.MouseEvent('pointermove', { clientX: 140, clientY: 100 }));
+  wheel.dispatchEvent(new window.MouseEvent('pointerup', { clientX: 140, clientY: 100 }));
+  assert.equal($('orbit-index').textContent, '03 / 3');
+});
+
+test('wheel settles at rest and stops its frames on review, hidden pages and reduced motion', async t => {
+  const { $, window, animation, plan } = await setup(t, { canvas: true, localGames: { manage_library: async () => managedLibrary() } });
+  await settle();
+  $('orbit-radiance-pause').click();
+  $('orbit-next').click(); assert.ok(animation.pending() > 0);
+  for (let time = 16; time < 2400; time += 16) animation.step(time);
+  assert.equal(animation.pending(), 0);
+  $('orbit-next').click(); await plan(); assert.equal(animation.pending(), 0);
+  $('vault-collection-btn').click(); $('orbit-next').click();
   Object.defineProperty(window.document, 'hidden', { configurable: true, value: true });
-  window.document.dispatchEvent(new window.Event('visibilitychange'));
+  window.document.dispatchEvent(new window.Event('visibilitychange')); assert.equal(animation.pending(), 0);
+});
+
+test('radial beams flow behind the wheel, respond to selection, and pause in review', async t => {
+  const { $, animation, plan } = await setup(t, { canvas: true, localGames: { manage_library: async () => managedLibrary() } });
+  await settle(); animation.step(0);
+  assert.equal($('orbit-radiance').getAttribute('aria-hidden'), 'true');
+  assert.ok(animation.strokes.some(stroke => stroke.points.length >= 80), 'Multiple radial trails are actually painted');
+  const before = JSON.stringify(animation.strokes[0].points);
+  animation.step(80);
+  assert.notEqual(JSON.stringify(animation.strokes[0].points), before);
+  $('orbit-next').click(); animation.step(120);
+  assert.ok(animation.strokes.some(stroke => stroke.width > 1.2), 'Selection intensifies the outward burst');
+  $('orbit-radiance-pause').click(); animation.step(150);
+  for (let time = 166; time < 2200; time += 16) animation.step(time);
   assert.equal(animation.pending(), 0);
-  Object.defineProperty(window.document, 'hidden', { configurable: true, value: false });
-  window.document.dispatchEvent(new window.Event('visibilitychange'));
+  assert.equal($('orbit-radiance-pause').getAttribute('aria-pressed'), 'true');
+  $('orbit-radiance-pause').click(); animation.step(2400);
   assert.ok(animation.pending() > 0);
-  await plan();
-  assert.equal(animation.pending(), 0);
-  $('vault-collection-btn').click();
-  animation.step(5000);
-  animation.step(7000);
-  assert.equal(animation.pending(), 0, 'Idle light field stops scheduling frames');
-});
-
-test('light field pause persists, reduced motion overrides it, and shuffle remains available', async t => {
-  const { $, window, animation } = await setup(t, { canvas: true });
-  $('vault-pause').click(); animation.step(10);
-  assert.equal(animation.pending(), 0);
-  assert.equal(window.localStorage.getItem('steam-organizer-particles-paused'), 'true');
-  assert.equal($('vault-pause-label').textContent, '继续动态');
-  const next = await setup(t, { canvas: true, particlesPaused: true });
-  next.animation.step(0); assert.equal(next.animation.pending(), 0);
-  next.$('vault-shuffle').click(); next.animation.step(40);
-  assert.equal(next.animation.pending(), 0);
-  next.$('motion-btn').click();
-  assert.equal(next.$('vault-pause').disabled, true);
-  assert.equal(next.$('vault-pause-label').textContent, '已减少动效');
-});
-
-test('spatial controls do not emit pulses while keyboard input remains bounded', async t => {
-  const current=await setup(t,{canvas:true,theme:'dark'}), baseline=await setup(t,{canvas:true,theme:'dark'});
-  const shape=instance=>JSON.stringify(instance.animation.strokes);
-  current.animation.step(0);baseline.animation.step(0);
-  current.$('vault-collection-btn').click();
-  current.animation.step(40);baseline.animation.step(40);
-  assert.equal(shape(current),shape(baseline),'Navigation does not emit a pulse; compare at the same ambient phase');
-  current.window.document.querySelector('.vault-exhibit').dispatchEvent(
-    new current.window.KeyboardEvent('keydown',{key:' ',bubbles:true}));
-  current.animation.step(400);baseline.animation.step(400);
-  assert.notEqual(shape(current),shape(baseline),'Keyboard input deforms the actual projected geometry');
-  current.animation.step(5000);current.animation.step(7000);
-  assert.equal(current.animation.pending(),0);
-  current.$('vault-pause').click();current.animation.step(7100);
-  const paused=shape(current);
-  current.$('vault-shuffle').click();current.animation.step(7200);
-  assert.notEqual(shape(current),paused,'Composition can change while motion is paused');
-  assert.equal(current.animation.pending(),0);
-});
-
-test('spatial scenes persist without changing review selections, search or plan freshness', async t => {
-  const {window,$,run,plan}=await setup(t,{spaceScene:'unrecognized'});
-  const root=window.document.documentElement;
-  assert.equal(root.dataset.vaultScene,'prism');
-  assert.equal(root.hasAttribute('aria-pressed'),false,'Only native scene buttons expose pressed state');
-  await plan();window.document.querySelector('.group-checkbox').click();
-  $('preview-search').value='Beta';run('filterPreview()');
-  const selected=$('preview-groups').textContent;
-  $('vault-collection-btn').click();
-  for(const scene of ['drift','echo','prism']) {
-    const button=window.document.querySelector(`button[data-vault-scene="${scene}"]`);
-    button.click();
-    assert.equal(button.getAttribute('aria-pressed'),'true');
-    assert.equal(root.dataset.vaultScene,scene);
-    assert.equal(window.localStorage.getItem('steam-organizer-space-scene'),scene);
-    assert.ok($('vault-art-fallback').querySelector('path,circle'));
-    assert.equal($('preview-groups').textContent,selected);
-  }
-  $('vault-review-btn').click();
-  assert.equal($('preview-search').value,'Beta');
-  assert.equal($('stale-banner').hidden,true);
-  assert.equal($('apply-btn').disabled,false);
-  const saved=await setup(t,{spaceScene:'echo'});
-  assert.equal(saved.window.document.documentElement.dataset.vaultScene,'echo');
-});
-
-test('spatial context loss cancels rendering, retains a still and can recover', async t => {
-  const {window,$,animation}=await setup(t,{canvas:true,theme:'dark'});
-  animation.step(0);
-  const event=new window.Event('webglcontextlost',{cancelable:true});
-  $('vault-canvas').dispatchEvent(event);
-  assert.equal(event.defaultPrevented,true);
-  assert.equal($('vault-art').dataset.renderer,'fallback');
-  assert.equal(animation.pending(),0);
-  assert.equal($('vault-pause').disabled,true);
-  window.document.querySelector('.stage').dispatchEvent(new window.MouseEvent('pointermove',{clientX:500,clientY:250,bubbles:true}));
-  assert.equal(animation.pending(),0,'Lost context cannot restart a dead rendering loop');
-  window.document.querySelector('button[data-vault-scene="drift"]').click();
-  assert.ok($('vault-art-fallback').querySelector('circle'),'Static scene changes still work');
-  $('vault-canvas').dispatchEvent(new window.Event('webglcontextrestored'));
-  animation.step(100);
-  assert.equal($('vault-art').dataset.renderer,'canvas');
-  assert.equal($('vault-pause').disabled,false);
-});
-
-test('spatial scene fades cancel on pause, reduced motion, review and appearance changes', async t => {
-  const {window,$,animation,plan}=await setup(t,{canvas:true,theme:'dark'});
-  const fades=[];
-  window.HTMLCanvasElement.prototype.animate=function(){const fade={cancelled:false,cancel(){this.cancelled=true;}};fades.push(fade);return fade;};
-  const choose=scene=>window.document.querySelector(`button[data-vault-scene="${scene}"]`).click();
-  choose('drift');assert.equal(fades.length,1);
-  $('vault-pause').click();assert.equal(fades[0].cancelled,true);animation.step(0);assert.equal(animation.pending(),0);
-  choose('echo');assert.equal(fades.length,1,'Paused selection switches stills without a fade');
-  $('vault-pause').click();choose('prism');
-  $('motion-btn').click();assert.equal(fades[1].cancelled,true);animation.step(100);assert.equal(animation.pending(),0);
-  $('motion-btn').click();choose('drift');await plan();assert.equal(fades[2].cancelled,true);
-  $('vault-collection-btn').click();choose('echo');
-  window.document.querySelector('[data-appearance="calm"]').click();assert.equal(fades[3].cancelled,true);
-});
-
-test('GPU spaces change topology, throttle ambient drawing and suspend outside the active view', async t => {
-  const {window,$,animation,plan}=await setup(t,{gpu:true,theme:'dark'});
-  animation.step(0);
-  assert.equal($('vault-art').dataset.renderer,'webgl');
-  const triangle=animation.draws.at(-1);assert.equal(triangle.mode,8);assert.ok(triangle.count>10000);
-  animation.step(10000);const idleDraws=animation.draws.length;
-  animation.step(10016);assert.equal(animation.draws.length,idleDraws,'Ambient mode does not draw at every 16ms frame');
-  animation.step(10034);assert.equal(animation.draws.length,idleDraws+1);
-  assert.ok(animation.pending()>0,'GPU scene keeps a slow ambient movement while visible');
-  window.document.querySelector('button[data-vault-scene="drift"]').click();animation.step(10100);
-  assert.equal(animation.draws.at(-1).mode,9);assert.equal(animation.draws.at(-1).count,12000);
-  window.document.querySelector('button[data-vault-scene="echo"]').click();animation.step(10200);
-  assert.equal(animation.draws.at(-1).mode,10);
-  $('vault-pause').click();animation.step(10250);assert.equal(animation.pending(),0);
-  $('vault-pause').click();animation.step(10300);
-  Object.defineProperty(window.document,'hidden',{configurable:true,value:true});
-  window.document.dispatchEvent(new window.Event('visibilitychange'));assert.equal(animation.pending(),0);
-  Object.defineProperty(window.document,'hidden',{configurable:true,value:false});
-  window.document.dispatchEvent(new window.Event('visibilitychange'));animation.step(20000);assert.ok(animation.pending()>0);
-  await plan();assert.equal(animation.pending(),0,'Review freezes the scene');
-  $('vault-collection-btn').click();animation.step(20100);
-  $('motion-btn').click();animation.step(20200);assert.equal(animation.pending(),0);
+  $('library-manager-open').click(); await settle(); animation.step(2450);
+  assert.equal(animation.pending(), 0, 'Dialog suspends background drawing');
+  $('library-manager-close').click(); animation.step(2500);
+  assert.ok(animation.pending() > 0, 'Closing dialog resumes ambient beams');
+  await plan(); assert.equal(animation.pending(), 0);
 });
 
 test('P3R and P5R effects stay in the illustration and suspend when hidden or reviewing', async t => {
@@ -804,4 +969,132 @@ test('P3R scene reveal finishes cleanly and respects pause/reduced motion', asyn
   $('persona-art').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   assert.equal(hero.style.clipPath, '');
   assert.equal(animation.pending(), 0);
+});
+
+function managedLibrary() {
+  return { account: 'account', revision: 'rev1', can_undo: false, folders: [{ id: 'fav', name: '常玩' }], games: [
+    { id: 'steam:1', appid: 1, name: 'Alpha', source: 'Steam', installed: true, steam_minutes: 120, minutes: null, folder: '', tags: [] },
+    { id: 'steam:2', appid: 2, name: '<img src=x onerror=alert(1)>', source: 'Steam', installed: false, steam_minutes: null, minutes: null, folder: 'fav', tags: ['待玩'] },
+    { id: 'local:3', appid: 3, name: 'Local game', source: '非 Steam', steam_minutes: null, minutes: 60, folder: '', tags: [] },
+  ] };
+}
+
+test('game management opens without writing and renders unsafe names as text', async t => {
+  const calls = [];
+  const { $, window } = await setup(t, { localGames: { manage_library: async (action, payload) => { calls.push({action, payload}); return managedLibrary(); } } });
+  $('library-manager-open').click(); await settle();
+  assert.equal($('library-manager-dialog').open, true);
+  assert.ok(calls.length >= 1 && calls.every(c => c.action === 'load'));
+  assert.equal($('library-manager-list').children.length, 3);
+  assert.equal($('library-manager-list').querySelector('img'), null);
+  assert.equal($('library-manager-move').disabled, true);
+  assert.match($('library-manager-list').textContent, /Steam 记录/);
+  assert.match($('library-manager-list').textContent, /自定义/);
+  window.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
+  assert.equal($('sheet').hidden, true);
+});
+
+test('folder creation and batch actions send account-bound IDs; filtering clears hidden selections', async t => {
+  const calls = [];
+  const data = managedLibrary();
+  const { $, window } = await setup(t, { localGames: { manage_library: async (action, payload) => {
+    calls.push({action, payload: JSON.parse(JSON.stringify(payload))});
+    if (payload.action === 'create_folder') data.folders.push({id:'new', name:payload.name});
+    return structuredClone(data);
+  } } });
+  $('library-manager-open').click(); await settle();
+  $('library-manager-new-folder').click(); $('library-manager-field').value = '周末';
+  $('library-manager-editor-save').click(); await settle();
+  assert.equal(calls.at(-1).payload.name, '周末');
+  assert.equal($('library-manager-editor').hidden, true);
+  $('library-manager-select').click(); $('library-manager-target').value = 'new'; $('library-manager-move').click(); await settle();
+  assert.deepEqual(calls.at(-1).payload.ids, ['steam:1', 'steam:2', 'local:3']);
+  assert.equal(calls.at(-1).payload.folder, 'new');
+  assert.equal(calls.at(-1).payload.account, 'account');
+  $('library-manager-select').click();
+  $('library-manager-search').value = 'Alpha'; $('library-manager-search').dispatchEvent(new window.Event('input'));
+  assert.equal($('library-manager-list').children.length, 1);
+  assert.equal($('library-manager-move').disabled, true);
+  $('library-manager-select').click(); $('library-manager-add-tag').click(); $('library-manager-field').value = '喜欢';
+  $('library-manager-editor-save').click(); await settle();
+  assert.deepEqual(calls.at(-1).payload.ids, ['steam:1']);
+  assert.equal(calls.at(-1).payload.tag, '喜欢');
+});
+
+test('personal playtime editor rejects blank and accepts zero or clear without replacing Steam record', async t => {
+  const calls = [];
+  const { $ } = await setup(t, { localGames: { manage_library: async (action, payload) => { calls.push({action, payload}); return managedLibrary(); } } });
+  $('library-manager-open').click(); await settle();
+  $('library-manager-list').querySelector('.manager-hours').click();
+  assert.match($('library-manager-editor-note').textContent, /不修改 Steam 时长/);
+  $('library-manager-field').value = ''; $('library-manager-editor-save').click(); await settle();
+  assert.equal(calls.filter(x => x.action !== 'load').length, 0);
+  $('library-manager-field').value = '0'; $('library-manager-editor-save').click(); await settle();
+  assert.equal(calls.at(-1).payload.hours, 0);
+  $('library-manager-list').querySelector('.manager-hours').click();
+  $('library-manager-reset-time').click(); await settle();
+  assert.equal(calls.at(-1).payload.hours, null);
+});
+
+test('Steam sync requires preview confirmation and keeps review on failure', async t => {
+  const calls = [];
+  const { $ } = await setup(t, { localGames: { manage_library: async (action, payload) => {
+    calls.push({action, payload});
+    if (action === 'preview') return { plan_id:'reviewed', replaced:2, groups:[{name:'常玩', appids:[1]}] };
+    if (action === 'publish') throw new Error('Steam 仍在运行');
+    return managedLibrary();
+  } } });
+  $('library-manager-open').click(); await settle();
+  $('library-manager-sync').click(); await settle();
+  assert.deepEqual(calls.filter(c => c.action !== 'load').map(c => c.action), ['preview']);
+  assert.match($('library-manager-sync-list').textContent, /常玩/);
+  $('library-manager-editor-save').click(); await settle();
+  assert.equal(calls.at(-1).payload.plan_id, 'reviewed');
+  assert.equal($('library-manager-editor').hidden, false);
+  assert.match($('library-manager-error').textContent, /仍在运行/);
+  assert.equal($('library-manager-close').disabled, false);
+});
+
+test('reorder controls persist order and switch off in alphabetical view', async t => {
+  const calls = [];
+  const { $, window } = await setup(t, { localGames: { manage_library: async (action, payload) => { calls.push({action,payload}); return managedLibrary(); } } });
+  $('library-manager-open').click(); await settle();
+  $('library-manager-list').querySelector('.manager-order button:last-child').click(); await settle();
+  assert.equal(calls.at(-1).payload.action, 'reorder');
+  assert.equal(calls.at(-1).payload.before, 'local:3');
+  $('library-manager-select').click(); $('library-manager-bottom').click(); await settle();
+  assert.equal(calls.at(-1).payload.before, null);
+  $('library-manager-sort').value = 'name'; $('library-manager-sort').dispatchEvent(new window.Event('change'));
+  assert.equal($('library-manager-list').querySelector('.manager-order button').disabled, true);
+  $('library-manager-select').click();
+  assert.equal($('library-manager-bottom').disabled, false);
+  $('library-manager-bottom').click(); await settle();
+  assert.equal(calls.at(-1).payload.before, null);
+  assert.equal($('library-manager-sort').value, 'manual');
+});
+
+ test('pointer drag supports reordering and folder moves without native HTML drag', async t => {
+  const calls = [];
+  const { $, window } = await setup(t, { localGames: { manage_library: async (action, payload) => { calls.push({action,payload}); return managedLibrary(); } } });
+  $('library-manager-open').click(); await settle();
+  const drag = async (target, cancel = false) => {
+    const handle = $('library-manager-list').querySelector('.manager-grip');
+    handle.setPointerCapture = () => {};
+    handle.hasPointerCapture = () => false;
+    window.document.elementFromPoint = () => target;
+    handle.dispatchEvent(new window.MouseEvent('pointerdown', {button:0,clientX:10,clientY:10}));
+    handle.dispatchEvent(new window.MouseEvent('pointermove', {button:0,clientX:20,clientY:20}));
+    handle.dispatchEvent(new window.MouseEvent(cancel ? 'pointercancel' : 'pointerup', {button:0,clientX:20,clientY:20}));
+    await settle();
+  };
+  await drag($('library-manager-list').children[1]);
+  assert.equal(calls.at(-1).payload.action, 'reorder');
+  assert.equal(calls.at(-1).payload.before, 'steam:2');
+  await drag($('library-manager-folders').querySelector('[data-folder="fav"]'));
+  assert.equal(calls.at(-1).payload.action, 'move');
+  assert.equal(calls.at(-1).payload.folder, 'fav');
+  const previous = calls.length;
+  await drag($('library-manager-list').children[1], true);
+  assert.equal(calls.length, previous);
+  assert.equal($('library-manager-dialog').classList.contains('is-dragging'), false);
 });

@@ -60,6 +60,10 @@ jobs:
           steam_settings.py
           steam_appinfo.py
           steam_library_core.py
+          steam_series.py
+          steam_nonsteam.py
+          steam_artwork.py
+          steam_library_manager.py
           steam_web.py
 
       - name: Set up Node.js for UI regression tests
@@ -116,6 +120,14 @@ jobs:
             '_internal\steam_ui\calm.js',
             '_internal\steam_ui\art\p3r-profile.webp',
             '_internal\steam_ui\art\p5r-profile.webp',
+            '_internal\steam_ui\art\app-icon.png',
+            '_internal\steam_ui\art\app-icon.ico',
+            '_internal\steam_ui\artwork.css',
+            '_internal\steam_ui\artwork.js',
+            '_internal\steam_ui\local-games.css',
+            '_internal\steam_ui\local-games.js',
+            '_internal\steam_ui\library-manager.css',
+            '_internal\steam_ui\library-manager.js',
             '_internal\steam_ui\vault.css',
             '_internal\webview\lib\Microsoft.Web.WebView2.Core.dll',
             '_internal\webview\lib\Microsoft.Web.WebView2.WinForms.dll',

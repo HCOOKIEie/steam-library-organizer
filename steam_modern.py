@@ -37,7 +37,7 @@ from steam_web import Organizer
 
 
 APP_TITLE = "Steam 游戏库整理"
-APP_VERSION = "1.1.2"
+APP_VERSION = "1.2.0"
 MUTEX_NAME = r"Local\SteamLibraryOrganizer.Desktop.v1"
 LOGGER = logging.getLogger("steam_library_organizer.modern")
 T = TypeVar("T")
@@ -283,6 +283,28 @@ _FETCH_COMPATIBILITY_SHIM = r"""
         return jsonResponse(await api.restore());
       case '/api/reveal':
         return jsonResponse(await api.reveal_folder());
+      case '/api/local-games/scan':
+        return jsonResponse(await api.scan_local_games(payload));
+      case '/api/local-games/cancel':
+        return jsonResponse(await api.cancel_local_scan());
+      case '/api/local-games/import':
+        return jsonResponse(await api.import_local_games(payload));
+      case '/api/local-games/undo':
+        return jsonResponse(await api.undo_local_import());
+      case '/api/artwork/load':
+      case '/api/artwork/current':
+      case '/api/artwork/search':
+      case '/api/artwork/preview':
+      case '/api/artwork/apply':
+      case '/api/artwork/auto':
+      case '/api/artwork/undo':
+        return jsonResponse(await api.manage_artwork(url.pathname.split('/').pop(), payload));
+      case '/api/library/load':
+      case '/api/library/cover':
+      case '/api/library/edit':
+      case '/api/library/preview':
+      case '/api/library/publish':
+        return jsonResponse(await api.manage_library(url.pathname.split('/').pop(), payload));
       default:
         return jsonResponse({ error: `未知的桌面接口：${url.pathname}` }, 404);
     }
@@ -332,6 +354,11 @@ def load_ui_html() -> str:
 
     html = _STYLE_LINK_RE.sub(inline_style, html)
     html = _SCRIPT_SRC_RE.sub(inline_script, html)
+    # The desktop HTML has no base URL; keep both logo uses fully offline.
+    icon_reference = "art/app-icon.png"
+    icon_payload = _safe_ui_asset(ui_root, icon_reference).read_bytes()
+    icon_data = "data:image/png;base64," + base64.b64encode(icon_payload).decode("ascii")
+    html = html.replace(f'"{icon_reference}"', f'"{icon_data}"')
     shim = f"<script>\n{_escape_inline_script(_FETCH_COMPATIBILITY_SHIM)}\n</script>"
     if "</head>" not in html.lower():
         raise RuntimeError("前端 index.html 缺少 </head>")
@@ -476,6 +503,71 @@ class DesktopApi:
 
         return self._run("恢复 Steam 备份", operation)
 
+    def scan_local_games(self, payload: dict) -> dict:
+        def operation():
+            with self._organizer.lock:
+                return self._organizer.local_games.scan(payload)
+        return self._run("扫描本机游戏", operation)
+
+    def manage_library(self, action: str, payload: dict) -> dict:
+        if action not in {"load", "cover", "edit", "preview", "publish"} or not isinstance(payload, dict):
+            raise RuntimeError("游戏管理请求无效")
+        if action == "cover":
+            return self._run("读取游戏封面", lambda: self._organizer.game_manager.cover(payload))
+        def operation():
+            self._change_mutation_count(1)
+            try:
+                with self._organizer.lock:
+                    return getattr(self._organizer.game_manager, action)(payload)
+            finally:
+                self._change_mutation_count(-1)
+        return self._run("游戏管理", operation)
+
+    def cancel_local_scan(self) -> dict:
+        if self._organizer._local_games is not None:
+            self._organizer._local_games.cancel.set()
+        return {"cancelled": True}
+
+    def _local_mutation(self, label, action):
+        def operation():
+            self._change_mutation_count(1)
+            try:
+                with self._organizer.lock:
+                    return action(self._organizer.local_games)
+            finally:
+                self._change_mutation_count(-1)
+        return self._run(label, operation)
+
+    def manage_artwork(self, action: str, payload: dict) -> dict:
+        if action not in {"load", "current", "search", "preview", "apply", "auto", "undo"} or not isinstance(payload, dict):
+            raise RuntimeError("游戏封面请求无效")
+        def operation():
+            mutation = action in {"apply", "auto", "undo"}
+            if mutation:
+                self._change_mutation_count(1)
+            try:
+                with self._organizer.lock:
+                    return getattr(self._organizer.artwork, action)(payload)
+            finally:
+                if mutation:
+                    self._change_mutation_count(-1)
+        return self._run("游戏封面", operation)
+
+    def import_local_games(self, payload: dict) -> dict:
+        return self._local_mutation("导入本机游戏", lambda importer: importer.apply(payload))
+
+    def undo_local_import(self) -> dict:
+        return self._local_mutation("撤销游戏导入", lambda importer: importer.undo())
+
+    def choose_game_folder(self) -> str | None:
+        if self._window is None:
+            raise RuntimeError("桌面窗口尚未就绪")
+        def operation():
+            import webview
+            selected = self._window.create_file_dialog(webview.FOLDER_DIALOG, directory=str(Path.home()))
+            return (selected if isinstance(selected, str) else str(selected[0])) if selected else None
+        return self._run("选择游戏文件夹", operation)
+
     def reveal_folder(self) -> dict[str, str]:
         def operation() -> dict[str, str]:
             with self._organizer.lock:
@@ -609,6 +701,7 @@ def _run_webview(log_path: Path) -> None:
         debug=False,
         private_mode=False,
         storage_path=str(storage_path),
+        icon=str(_resource_root() / "steam_ui" / "art" / "app-icon.ico"),
     )
 
 
@@ -642,6 +735,13 @@ def main() -> None:
             )
             return
         mutex_owned = True
+        if os.name == "nt":
+            try:
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                    "HCOOKIEie.SteamLibraryOrganizer"
+                )
+            except (AttributeError, OSError):
+                LOGGER.debug("无法设置任务栏应用标识", exc_info=True)
         _enable_dpi_awareness()
 
         try:

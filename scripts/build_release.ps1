@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [ValidatePattern('^\d+\.\d+\.\d+$')]
-    [string] $Version = '1.1.2',
+    [string] $Version = '1.2.0',
 
     [ValidateSet('OneFile', 'OneDir', 'Both')]
     [string] $Layout = 'Both',
@@ -32,6 +32,10 @@ $pythonSources = @(
     'steam_settings.py',
     'steam_appinfo.py',
     'steam_library_core.py',
+    'steam_series.py',
+    'steam_nonsteam.py',
+    'steam_artwork.py',
+    'steam_library_manager.py',
     'steam_web.py'
 ) | ForEach-Object { Join-Path $projectRoot $_ }
 $javascriptSource = Join-Path $projectRoot 'steam_ui\app.js'
@@ -43,6 +47,9 @@ if (-not $nodeCommand) {
 $nodePath = [IO.Path]::GetFullPath($nodeCommand.Source)
 $npmCommand = Get-Command npm.cmd -CommandType Application -ErrorAction SilentlyContinue |
     Select-Object -First 1
+$npmCliPath = if ($npmCommand) {
+    Join-Path (Split-Path -Parent $npmCommand.Source) 'node_modules\npm\bin\npm-cli.js'
+} else { $null }
 $managedEnvironmentNames = @(
     'TEMP',
     'TMP',
@@ -368,12 +375,19 @@ try {
     Invoke-Checked 'Check calm motion JavaScript syntax' {
         & $nodePath --check (Join-Path $projectRoot 'steam_ui\calm.js')
     }
+    Invoke-Checked 'Check local game import JavaScript syntax' {
+        & $nodePath --check (Join-Path $projectRoot 'steam_ui\library-manager.js')
+        if ($LASTEXITCODE -ne 0) { throw 'library-manager.js syntax check failed' }
+        & $nodePath --check (Join-Path $projectRoot 'steam_ui\local-games.js')
+        if ($LASTEXITCODE -ne 0) { throw 'local-games.js syntax check failed' }
+        & $nodePath --check (Join-Path $projectRoot 'steam_ui\artwork.js')
+    }
 
     if (-not $SkipTests) {
         Invoke-Checked 'Run unit tests in the clean release environment' {
             & $venvPython -m unittest discover -s tests -v
         }
-        if (-not $npmCommand) {
+        if (-not $npmCliPath -or -not (Test-Path -LiteralPath $npmCliPath -PathType Leaf)) {
             throw 'npm.cmd was not found. Install Node.js with npm to run UI regression tests.'
         }
         # npm scripts need node on PATH, but its directory must not enter the
@@ -382,10 +396,10 @@ try {
         try {
             $env:PATH = (Split-Path -Parent $nodePath) + [IO.Path]::PathSeparator + $releasePath
             Invoke-Checked 'Install locked development-only UI test dependencies' {
-                & $npmCommand.Source ci --ignore-scripts --no-audit --no-fund
+                & $nodePath $npmCliPath ci --ignore-scripts --no-audit --no-fund
             }
             Invoke-Checked 'Run UI regression tests' {
-                & $npmCommand.Source test
+                & $nodePath $npmCliPath test
             }
         }
         finally {

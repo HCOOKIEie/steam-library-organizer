@@ -37,7 +37,7 @@ from pathlib import Path
 
 MAGIC_V29 = 0x07564429
 HEADER_SIZE = 68  # appid + size + 60 bytes of hashes/flags before the VDF
-CACHE_SCHEMA = 2
+CACHE_SCHEMA = 3
 
 
 class AppInfoError(RuntimeError):
@@ -174,6 +174,7 @@ def _summarise(appid: int, data: dict, language: str) -> dict:
 
     developers: list[str] = []
     publishers: list[str] = []
+    franchises: list[str] = []
     associations = common.get("associations")
     if isinstance(associations, dict):
         for association in associations.values():
@@ -185,6 +186,8 @@ def _summarise(appid: int, data: dict, language: str) -> dict:
                 developers.append(value)
             elif kind == "publisher" and value and value not in publishers:
                 publishers.append(value)
+            elif kind == "franchise" and value and value not in franchises:
+                franchises.append(value)
 
     # ``extended`` is present on older records and is still a useful fallback,
     # while ``common.associations`` carries all companies on modern records.
@@ -216,6 +219,7 @@ def _summarise(appid: int, data: dict, language: str) -> dict:
         "publisher": publishers[0] if publishers else "",
         "developers": developers,
         "publishers": publishers,
+        "franchises": franchises,
         "release_date": release.get("date") or common.get("steam_release_date") or "",
     }
 

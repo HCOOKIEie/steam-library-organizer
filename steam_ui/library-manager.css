@@ -1,0 +1,70 @@
+/* File-browser proportions and theme tokens; the game list is the focal surface. */
+.manager-dialog { position:fixed; inset:0; margin:auto; width:min(1180px,calc(100vw - 40px)); height:min(820px,calc(100dvh - 40px)); max-width:none; max-height:none; padding:0; border:1px solid var(--stroke); border-radius:16px; background:var(--surface); color:var(--text); font:14px/1.5 var(--font); overflow:hidden; }
+.manager-dialog[open] { display:flex; flex-direction:column; animation:local-games-enter 180ms var(--ease-out); }
+.manager-dialog::backdrop { background:rgba(0,0,0,.65); }
+.manager-heading { display:flex; align-items:center; gap:16px; padding:22px 24px; border-bottom:1px solid var(--stroke); }
+.manager-heading > div:first-child { flex:1; }
+.manager-heading h2 { margin:0; font:650 24px/1.4 var(--font); letter-spacing:-.5px; }
+.manager-heading p { margin:4px 0 0; font-size:12px; color:var(--muted); }
+.manager-dialog .btn,.manager-dialog .icon-btn { min-height:40px; }
+.manager-dialog input:not([type=checkbox]),.manager-dialog select { min-height:40px; min-width:0; max-width:100%; border:1px solid var(--stroke); background:var(--surface-2); color:var(--text); border-radius:7px; padding:8px 12px; font:inherit; }
+.manager-dialog :focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.manager-body { display:grid; grid-template-columns:196px minmax(0,1fr); flex:1; min-height:0; }
+.manager-sidebar { padding:16px 12px; border-right:1px solid var(--stroke); overflow:auto; }
+.manager-sidebar-header { display:flex; align-items:center; justify-content:space-between; padding:0 8px 8px; color:var(--muted); font-size:12px; }
+.manager-folder { width:100%; display:flex; align-items:center; gap:10px; min-height:44px; border:0; border-radius:7px; background:transparent; color:var(--text); padding:8px 12px; margin-bottom:4px; text-align:left; font:inherit; }
+.manager-folder:hover { background:var(--surface-2); }
+.manager-folder[aria-pressed=true] { background:var(--surface-2); box-shadow:inset 3px 0 var(--primary); font-weight:600; }
+.manager-folder-icon { font-size:20px; color:var(--muted); }
+.manager-folder-name { flex:1; overflow-wrap:anywhere; }
+.manager-folder-count { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.manager-main { display:flex; flex-direction:column; min-height:0; min-width:0; }
+.manager-titlebar,.manager-filters,.manager-bulk { display:flex; align-items:center; gap:8px; padding:12px 20px; flex-wrap:wrap; }
+.manager-titlebar { padding-bottom:0; }
+.manager-titlebar h3 { font-size:16px; font-weight:650; margin:0; overflow-wrap:anywhere; }
+.manager-titlebar > span { flex:1; font-size:12px; color:var(--muted); }
+.manager-filters input { flex:1; }
+.manager-filters select { max-width:180px; }
+.manager-bulk { border-top:1px solid var(--stroke); border-bottom:1px solid var(--stroke); font-size:12px; background:var(--surface-2); gap:4px; }
+.manager-bulk .btn { padding:6px 10px; }
+.manager-bulk select { width:140px; }
+#library-manager-selected { color:var(--muted); margin-right:4px; font-variant-numeric:tabular-nums; }
+.manager-scroll { flex:1; min-height:0; overflow:auto; padding:0 20px 16px; overscroll-behavior:contain; }
+.manager-row { display:flex; align-items:center; gap:8px; min-height:76px; border-bottom:1px solid var(--stroke); }
+.manager-row.is-selected { background:var(--surface-2); }
+.manager-check { display:grid; place-items:center; flex:0 0 32px; min-height:48px; cursor:pointer; }
+.manager-check input { width:16px; height:16px; accent-color:var(--primary); }
+.manager-grip { width:28px; min-height:44px; background:none; border:0; color:var(--muted); font-size:23px; cursor:grab; touch-action:none; }
+.manager-dialog.is-dragging { cursor:grabbing; user-select:none; }
+.manager-row.is-drag-source { opacity:.45; }
+.manager-grip:active { cursor:grabbing; }
+.manager-index { width:22px; flex-shrink:0; font-size:11px; font-variant-numeric:tabular-nums; color:var(--muted); }
+.manager-game { flex:1; min-width:0; padding:12px 0; }
+.manager-game strong { display:block; font-size:14px; font-weight:550; overflow-wrap:anywhere; }
+.manager-game-meta { display:flex; align-items:center; gap:6px 10px; flex-wrap:wrap; margin-top:5px; color:var(--muted); font-size:11px; }
+.manager-tag { padding:1px 6px; background:var(--surface-2); border:1px solid var(--stroke); border-radius:4px; color:var(--text); overflow-wrap:anywhere; }
+.manager-hours { min-width:92px; padding:8px; text-align:right; background:transparent; border:0; border-radius:6px; color:var(--text); font:13px/1.5 var(--font); font-variant-numeric:tabular-nums; }
+.manager-hours small { display:block; font-size:10px; color:var(--muted); }
+.manager-hours:hover { background:var(--surface-2); }
+.manager-order { display:flex; }
+.manager-order button { padding:6px; width:32px; color:var(--muted); }
+@media(hover:hover) { .manager-order { opacity:0; } .manager-row:hover .manager-order,.manager-row:focus-within .manager-order { opacity:1; } }
+.manager-row.is-drop { box-shadow:inset 0 2px var(--primary); }
+.manager-folder.is-drop { outline:2px solid var(--primary); outline-offset:-2px; }
+.manager-footer { display:flex; align-items:center; gap:12px; padding:12px 24px; border-top:1px solid var(--stroke); }
+.manager-footer p { margin:0 auto 0 0; color:var(--muted); font-size:12px; }
+.manager-error { padding:10px 20px; color:var(--danger); background:var(--surface-2); font-size:13px; }
+.manager-editor { padding:20px; border-bottom:1px solid var(--stroke); background:var(--surface-2); max-height:50vh; overflow:auto; }
+.manager-editor h4 { margin:0 0 8px; font-size:16px; }
+.manager-editor p { font-size:12px; color:var(--muted); margin:0 0 12px; }
+.manager-editor label { display:grid; gap:6px; font-size:12px; }
+.manager-editor-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:12px; }
+#library-manager-sync-list { max-height:160px; overflow:auto; margin:0; padding-left:20px; font-size:13px; }
+.manager-empty { padding:48px 12px; text-align:center; color:var(--muted); }
+.manager-empty p { margin-top:8px; font-size:12px; }
+#library-manager-more { display:block; margin:16px auto 0; }
+.manager-dialog [hidden] { display:none !important; }
+@media(max-width:760px) { .manager-dialog { width:calc(100vw - 16px); height:calc(100dvh - 16px); } .manager-body { grid-template-columns:140px minmax(0,1fr); } .manager-heading { padding:16px; flex-wrap:wrap; gap:8px; } .manager-filters input { flex-basis:100%; } .manager-index { display:none; } .manager-order { flex-direction:column; } .manager-order button { min-height:32px; } .manager-scroll { padding:0 12px; } .manager-footer { padding:12px; } }
+@media(max-width:520px) { .manager-body { display:flex; flex-direction:column; } .manager-sidebar { border-right:0; border-bottom:1px solid var(--stroke); padding:8px; max-height:140px; flex-shrink:0; } #library-manager-folders { display:flex; flex-wrap:wrap; gap:4px; } .manager-folder { width:auto; max-width:100%; margin:0; min-height:40px; } .manager-sidebar-header { padding:0 4px; } .manager-main { flex:1; } .manager-titlebar,.manager-filters,.manager-bulk { padding:8px 12px; } .manager-grip { display:none; } .manager-hours { min-width:76px; } .manager-footer p { display:none; } .manager-heading h2 { font-size:20px; } .manager-heading > div:first-child { flex-basis:calc(100% - 50px); } #library-manager-close { position:absolute; right:12px; top:16px; } }
+@media(prefers-reduced-motion:reduce) { .manager-dialog[open] { animation:none; } }
+:root[data-motion=reduced] .manager-dialog[open] { animation:none; }

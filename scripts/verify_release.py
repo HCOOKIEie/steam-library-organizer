@@ -19,8 +19,14 @@ def verify(version):
     archive = CArchiveReader(str(exe))
     entries = {name.replace('\\', '/'): name for name in archive.toc}
     spec = ast.parse((root / 'scripts/SteamLibraryOrganizer.spec').read_text(encoding='utf-8'))
-    assets = next(ast.literal_eval(n.value) for n in spec.body if isinstance(n, ast.Assign)
-                  and any(isinstance(t, ast.Name) and t.id == 'UI_FILES' for t in n.targets))
+    assets = ()
+    for node in spec.body:
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'UI_FILES' for t in node.targets):
+            assets = ast.literal_eval(node.value)
+        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name) and node.target.id == 'UI_FILES':
+            assert isinstance(node.op, ast.Add)
+            assets += ast.literal_eval(node.value)
+    assert assets, 'No UI assets declared in spec'
     for name in assets:
         key = 'steam_ui/' + name
         data = (root / key).read_bytes()
@@ -33,6 +39,10 @@ def verify(version):
                 for arch in ('x64', 'x86', 'arm64')]
     for name in runtime:
         assert name in entries and (bundle / '_internal' / name).is_file(), name
+    modules = ('steam_series', 'steam_nonsteam', 'steam_artwork', 'steam_library_manager')
+    frozen_modules = archive.open_embedded_archive('PYZ.pyz').toc
+    for name in modules:
+        assert name in frozen_modules, 'Missing frozen module: ' + name
     major, minor, patch = map(int, version.split('.'))
     for path in (exe, bundle / 'SteamLibraryOrganizer.exe'):
         pe = pefile.PE(str(path))
@@ -63,6 +73,7 @@ def verify(version):
                 assert z.read('THIRD_PARTY_LICENSES/' + path.name) == path.read_bytes(), path.name
     report = dict(version=version, verified_utc=datetime.now(timezone.utc).isoformat(),
                   ui_assets_exactly_match_source=len(assets), runtime_files_checked_in_both_layouts=len(runtime),
+                  feature_modules_checked=list(modules),
                   portable_zip_crc='PASS', licenses='PASS', pe_architecture_and_version=f'AMD64; {version}.0',
                   gui_smoke_test='Not performed by this artifact integrity checker.')
     (release / 'BUILD-VERIFICATION.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

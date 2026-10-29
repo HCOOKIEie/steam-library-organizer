@@ -1,8 +1,8 @@
 """Local web UI server for the Steam Library Organizer.
 
-Binds to 127.0.0.1 only. Everything it needs is read from the local Steam
-install; the only optional network call is the official GetOwnedGames API when
-the user supplies a key.
+Binds to 127.0.0.1 only. Library operations read the local Steam install.
+Optional owned-game lookup uses Steam's API; artwork matching explicitly
+queries public game catalogs and downloads existing images from their CDNs.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ import sys
 import threading
 import time
 import webbrowser
+from contextlib import nullcontext
 from collections import OrderedDict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -32,10 +33,13 @@ from steam_library_core import (
     detect_steam_root,
     validate_steam_root,
 )
+from steam_nonsteam import LocalGameImporter
+from steam_library_manager import LibraryManager
+from steam_artwork import ArtworkManager
 
 UI_DIR = Path(__file__).with_name("steam_ui")
 DEFAULT_PORT = 8760
-MODES = ("initial", "genre", "form", "developer", "publisher", "state", "recent", "playtime")
+MODES = ("initial", "genre", "series", "form", "developer", "publisher", "state", "recent", "playtime")
 MAX_PLANS = 8
 PLAN_TTL_SECONDS = 30 * 60
 CSRF_TOKEN = secrets.token_urlsafe(32)
@@ -61,6 +65,15 @@ class Organizer:
         self.selected: set[str] = set()
         self.plans: OrderedDict[str, dict] = OrderedDict()
         self.session_games: dict[int, dict] = {}
+        self._local_games = None
+        self.game_manager = LibraryManager(self)
+        self.artwork = ArtworkManager(self)
+
+    @property
+    def local_games(self):
+        if self._local_games is None or self._local_games.library is not self.library:
+            self._local_games = LocalGameImporter(self.library, self._ensure_steam_stopped)
+        return self._local_games
 
     @property
     def session_appids(self) -> set[int]:
@@ -437,7 +450,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header(
             "Content-Security-Policy",
             "default-src 'self'; script-src 'self'; style-src 'self'; "
-            "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'",
+            "img-src 'self' data: https://shared.akamai.steamstatic.com https://shared.fastly.steamstatic.com; connect-src 'self'; frame-ancestors 'none'",
         )
         self.end_headers()
         self.wfile.write(payload)
@@ -560,10 +573,28 @@ class Handler(BaseHTTPRequestHandler):
             self._json(403, {"error": security_error})
             return
         route = urlparse(self.path).path
-        with ORGANIZER.lock:
+        if route == "/api/local-games/cancel":
+            if ORGANIZER._local_games is not None:
+                ORGANIZER._local_games.cancel.set()
+            self._json(200, {"cancelled": True})
+            return
+        with (nullcontext() if route == "/api/library/cover" else ORGANIZER.lock):
             try:
                 payload = self._body()
-                if route == "/api/plan":
+                if route == "/api/library/cover":
+                    self._json(200, ORGANIZER.game_manager.cover(payload))
+                elif route in {"/api/library/load", "/api/library/edit", "/api/library/preview", "/api/library/publish"}:
+                    action = route.rsplit("/", 1)[-1]
+                    self._json(200, getattr(ORGANIZER.game_manager, action)(payload))
+                elif route == "/api/local-games/scan":
+                    self._json(200, ORGANIZER.local_games.scan(payload))
+                elif route == "/api/local-games/import":
+                    self._json(200, ORGANIZER.local_games.apply(payload))
+                elif route == "/api/local-games/undo":
+                    self._json(200, ORGANIZER.local_games.undo())
+                elif route.startswith("/api/artwork/") and route.rsplit("/", 1)[-1] in {"load", "current", "search", "preview", "apply", "auto", "undo"}:
+                    self._json(200, getattr(ORGANIZER.artwork, route.rsplit("/", 1)[-1])(payload))
+                elif route == "/api/plan":
                     ORGANIZER.set_language(payload.get("language") or "schinese")
                     modes = payload.get("modes") or []
                     try:

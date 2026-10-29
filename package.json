@@ -1,12 +1,12 @@
 {
   "name": "steam-library-organizer-ui-checks",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "private": true,
   "license": "MIT",
   "description": "Development-only DOM regression checks; the desktop application has no Node.js runtime dependency.",
   "scripts": {
     "test": "node --test tests/ui.test.cjs",
-    "check": "node --check steam_ui/app.js && node --check steam_ui/theme-bootstrap.js && node --check steam_ui/appearance.js && node --check steam_ui/vault.js && node --check steam_ui/persona-motion.js && node --check steam_ui/calm.js"
+    "check": "node --check steam_ui/app.js && node --check steam_ui/theme-bootstrap.js && node --check steam_ui/appearance.js && node --check steam_ui/vault.js && node --check steam_ui/persona-motion.js && node --check steam_ui/calm.js && node --check steam_ui/local-games.js && node --check steam_ui/library-manager.js && node --check steam_ui/artwork.js"
   },
   "devDependencies": {
     "jsdom": "26.1.0"

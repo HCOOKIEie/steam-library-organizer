@@ -43,7 +43,7 @@ function applyTheme(theme, { persist = false, announce = false } = {}) {
   const isVault = document.documentElement.dataset.appearance === 'vault';
   document.documentElement.style.colorScheme = isReload ? 'light' : nextTheme;
   const themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.content = isVault ? (nextTheme === 'light' ? '#eef2f1' : '#090d10') : isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isRoyal ? (nextTheme === 'light' ? '#e21d30' : '#c90d25') : (nextTheme === 'light' ? '#f5f5f7' : '#161618');
+  if (themeColor) themeColor.content = isVault ? (nextTheme === 'light' ? '#eef0f3' : '#0c1015') : isReload ? (nextTheme === 'light' ? '#006fdb' : '#0059cf') : isRoyal ? (nextTheme === 'light' ? '#e21d30' : '#c90d25') : (nextTheme === 'light' ? '#f5f5f7' : '#161618');
 
   if (persist) {
     try {
@@ -134,6 +134,7 @@ const state = {
 const MODE_CARDS = [
   { id: 'initial', title: '首字母', sub: '拼音 / A–Z', icon: 'type' },
   { id: 'genre', title: '游戏类型', sub: '动作 · 角色扮演', icon: 'tag' },
+  { id: 'series', title: '游戏系列', sub: '本地系列资料 / 名称规则', icon: 'layers' },
   { id: 'form', title: '条目形式', sub: '游戏 · DLC · 工具', icon: 'layers' },
   { id: 'developer', title: '开发商', sub: '开发团队', icon: 'build' },
   { id: 'publisher', title: '发行商', sub: '发行公司', icon: 'flag' },
@@ -267,6 +268,13 @@ async function api(path, body) {
       if (path === '/api/reveal') return await bridge.reveal_folder();
       if (path === '/api/choose-root') return await bridge.choose_steam_root();
       if (path === '/api/open-log') return await bridge.open_log_file();
+      if (path === '/api/local-games/scan') return await bridge.scan_local_games(body || {});
+      if (path === '/api/local-games/cancel') return await bridge.cancel_local_scan();
+      if (path === '/api/local-games/import') return await bridge.import_local_games(body || {});
+      if (path === '/api/local-games/undo') return await bridge.undo_local_import();
+      if (path === '/api/local-games/folder') return await bridge.choose_game_folder();
+      if (['/api/library/load', '/api/library/cover', '/api/library/edit', '/api/library/preview', '/api/library/publish'].includes(path)) return await bridge.manage_library(path.split('/').pop(), body || {});
+      if (['load', 'current', 'search', 'preview', 'apply', 'auto', 'undo'].some(action => path === `/api/artwork/${action}`)) return await bridge.manage_artwork(path.split('/').pop(), body || {});
       throw new Error(`未知本地操作：${path}`);
     } catch (error) {
       const message = error?.message || String(error || '本地操作失败');
@@ -341,7 +349,7 @@ function syncPlanFreshness(message = '') {
   syncRuleControls();
   if (!state.plan.length) {
     state.planFresh = false;
-    $('plan-status').textContent = state.scanReady ? '选好规则后生成预览。' : '扫描后可预览。';
+    $('plan-status').textContent = state.scanReady ? '选择分类方式，再生成预览。' : '扫描完成后可生成预览。';
     updateProgress();
     updateActionState();
     return;
@@ -351,15 +359,15 @@ function syncPlanFreshness(message = '') {
   const panel = $('preview-panel');
   panel.classList.toggle('is-stale', !state.planFresh);
   $('stale-banner').hidden = state.planFresh;
-  $('preview-badge').textContent = state.planCommitted ? '已写入' : (state.planFresh ? '待审阅' : '需要更新');
+  $('preview-badge').textContent = state.planCommitted ? '已写入' : (state.planFresh ? '待确认' : '需要更新');
   if (state.planFresh) {
-    $('plan-status').textContent = '可检查、勾选分类。';
+    $('plan-status').textContent = '勾选要写入的分类。';
   } else {
     $('stale-banner').textContent = message || (state.planCommitted
-      ? '这份预览已经执行过。再次写入前，请重新生成预览。'
-      : '设置已改变。这份预览已过期，请重新生成后再写入。');
+      ? '这些分类已写入 Steam。再次写入前，请重新生成预览。'
+      : '设置已更改，请重新生成预览后再写入。');
     $('plan-status').textContent = state.planCommitted
-      ? '已完成，再次整理需重新生成预览。'
+      ? '已写入 Steam。再次整理前，请重新生成预览。'
       : '设置已改变，请重新生成预览。';
   }
   updateProgress();
@@ -531,13 +539,13 @@ function renderScanCounts() {
   const sources = sourceSummary(state.server.sources || counts.sources);
   $('quality-copy').textContent = [
     metadataError
-      ? `${state.server.appinfo_stale ? '当前显示的是上一次成功读取的数据。' : '当前没有可安全使用的元数据。'} 错误：${metadataError}`
+      ? `${state.server.appinfo_stale ? '当前显示的是上一次成功读取的数据。' : '未能读取可用的游戏资料。'} 错误：${metadataError}`
       : '',
     sources ? `来源：${sources}。` : '',
-    unresolved ? (state.scope === 'all' ? '“全部条目”会纳入资料不完整项。' : '资料不完整项已从当前推荐范围排除。') : '',
+    unresolved ? (state.scope === 'all' ? '“全部条目”包含资料不完整的条目。' : '当前范围不包含资料不完整的条目。') : '',
     auxiliary ? `${formatNumber(auxiliary)} 个 DLC、工具或辅助条目。` : '',
     scanWarnings.join(' '),
-    '各范围可能重叠。',
+    '同一条目可能出现在多个范围中。',
   ].filter(Boolean).join(' ');
   $('quality-card').classList.toggle(
     'is-warning',
@@ -587,7 +595,7 @@ function renderState(data) {
   if (!state.metadataReady) {
     $('plan-status').textContent = '游戏资料未就绪，请重新扫描。';
   } else if (!state.plan.length) {
-    $('plan-status').textContent = '选好规则后生成预览。';
+    $('plan-status').textContent = '选择分类方式，再生成预览。';
   }
   updateProgress();
   updateActionState();
@@ -827,7 +835,7 @@ function renderGroups(groups) {
     $('stale-banner').hidden = true;
   }
   $('preview-stats').hidden = groups.length === 0;
-  $('preview-badge').textContent = groups.length ? '待审阅' : '无可用分类';
+  $('preview-badge').textContent = groups.length ? '待确认' : '无可用分类';
 
   const byMode = new Map();
   groups.forEach((group) => {
@@ -1092,9 +1100,9 @@ function confirmBody(intro, summary) {
   if (summary) {
     const metrics = make('div', 'confirm-metrics');
     [
-      [summary.groups, '收藏夹'],
-      [summary.uniqueApps, '唯一条目'],
-      [summary.memberships, '总归属'],
+      [summary.groups, '分类'],
+      [summary.uniqueApps, '条目数（去重）'],
+      [summary.memberships, '归类次数'],
     ].forEach(([value, label]) => {
       const item = make('div');
       item.append(make('strong', '', formatNumber(value)), make('span', '', label));
@@ -1119,8 +1127,8 @@ function askApply() {
   sheet.open({
     kicker: '最后确认',
     title: '备份并写入 Steam',
-    body: confirmBody('工具会先创建备份，再替换由本工具管理的旧自动分类。你自己的其他分类会保留。', summary),
-    note: `需要 Steam 完全退出。将替换 ${formatNumber(state.planSummary.existing_managed)} 个旧自动分类，并保留 ${formatNumber(state.planSummary.manual_preserved)} 个其他分类。`,
+    body: confirmBody('先备份，再替换本工具生成的旧自动分类。其他分类保留。', summary),
+    note: `请先完全退出 Steam。将替换 ${formatNumber(state.planSummary.existing_managed)} 个旧自动分类，并保留 ${formatNumber(state.planSummary.manual_preserved)} 个其他分类。`,
     confirmLabel: `备份并写入 ${formatNumber(summary.groups)} 个分类`,
     onConfirm: async () => {
       state.busy.apply = true;
@@ -1134,7 +1142,7 @@ function askApply() {
         if (data.state_error) log(`写入已完成，但状态刷新失败：${data.state_error}`);
         log(`写入完成：${formatNumber(data.collections ?? summary.groups)} 个分类，${formatNumber(data.apps ?? summary.uniqueApps)} 个条目`, 'good');
         if (data.backup) log(`写入前备份：${data.backup}`);
-        showResult('写入完成', '重新启动 Steam 后即可在游戏库左侧查看新分类。本次写入仍可通过备份恢复。', data.backup || '');
+        showResult('写入完成', '重启 Steam 后可在游戏库左侧查看新分类。如需撤销，可恢复备份。', data.backup || '');
         state.planCommitted = true;
         state.planFresh = false;
         syncPlanFreshness('这份预览已成功写入。如需再次整理，请重新生成预览。');
@@ -1144,7 +1152,7 @@ function askApply() {
       } catch (error) {
         log(`写入失败：${error.message}`, 'error');
         sheet.setError(`写入失败：${error.message}`);
-        toast('写入失败，未关闭确认窗口', true);
+        toast('写入失败，请查看窗口中的错误信息', true);
         sheet.setBusy(false);
       } finally {
         state.busy.apply = false;
@@ -1159,9 +1167,9 @@ function askRestore() {
   sheet.open({
     kicker: '恢复保护',
     title: '恢复最近一次备份？',
-    body: confirmBody('这会用最近一次备份替换当前的 Steam 收藏夹文件。恢复成功后，需要重新启动 Steam 查看结果。'),
-    note: 'Steam 必须完全退出。恢复前还会为当前状态创建一份安全备份，便于撤销这次恢复。',
-    confirmLabel: '创建安全备份并恢复',
+    body: confirmBody('将用最近一次备份替换当前 Steam 分类。恢复后，重启 Steam 查看结果。'),
+    note: '请先完全退出 Steam。恢复前会备份当前分类，再次恢复可撤销这次操作。',
+    confirmLabel: '备份并恢复',
     danger: true,
     onConfirm: async () => {
       state.busy.restore = true;
@@ -1174,7 +1182,7 @@ function askRestore() {
         const safetyBackup = data.safety_backup || '';
         log(`已恢复备份：${data.restored}`, 'good');
         if (safetyBackup) log(`恢复前安全备份：${safetyBackup}`);
-        showResult('备份已恢复', '当前收藏夹已替换为最近备份。重新启动 Steam 后查看结果。', safetyBackup ? `恢复前安全备份：${safetyBackup}` : (data.restored || ''));
+        showResult('备份已恢复', '已恢复到最近一次备份。重启 Steam 后查看分类。', safetyBackup ? `恢复前安全备份：${safetyBackup}` : (data.restored || ''));
         state.planConfig = null;
         state.planFresh = false;
         state.planCommitted = false;
@@ -1185,7 +1193,7 @@ function askRestore() {
       } catch (error) {
         log(`恢复失败：${error.message}`, 'error');
         sheet.setError(`恢复失败：${error.message}`);
-        toast('恢复失败，当前窗口会保留错误详情', true);
+        toast('恢复失败，请查看窗口中的错误信息', true);
         sheet.setBusy(false);
       } finally {
         state.busy.restore = false;
@@ -1234,7 +1242,7 @@ async function chooseSteamRoot() {
     $('preview-warnings').hidden = true;
     $('preview-badge').textContent = '尚未生成';
     $('preview-context').textContent = '确认分类后再写入 Steam。';
-    $('empty-title').textContent = '先看看整理结果';
+    $('empty-title').textContent = '尚未生成分类';
     $('empty-copy').textContent = '选择分类方式，再生成预览。';
     $('preview-search').value = '';
     filterPreview();
@@ -1289,7 +1297,7 @@ function filterPreview() {
   $('search-empty').hidden = !query || !state.plan.length || visibleCount > 0;
   $('search-result-count').textContent = query && state.plan.length ? `${visibleCount} / ${state.plan.length} 个分类` : '';
   $('select-all').textContent = query ? '全选结果' : '全选';
-  $('select-none').textContent = query ? '取消结果' : '全不选';
+  $('select-none').textContent = query ? '取消结果选择' : '取消全选';
   updateSectionCheckboxes();
   updateActionState();
 }
@@ -1355,7 +1363,7 @@ function updateActionState() {
     $('action-title').textContent = '没有可用分类';
     $('action-hint').textContent = '换个范围或规则再试';
   } else if (!state.plan.length) {
-    $('action-title').textContent = '可以开始整理';
+    $('action-title').textContent = '可以生成预览';
     $('action-hint').textContent = state.modes.length ? '先预览，再写入' : '请至少选择一种分类方式';
   } else if (!state.planFresh) {
     $('action-title').textContent = '预览需要更新';
@@ -1392,6 +1400,7 @@ function updateActionState() {
   $('select-all').disabled = configBusy || noVisibleGroups;
   $('select-none').disabled = configBusy || noVisibleGroups;
   $('preview-scroll').setAttribute('aria-busy', String(state.busy.plan));
+  window.dispatchEvent(new CustomEvent('organizer-actions-updated'));
 }
 
 /* Boot ------------------------------------------------------------------ */
@@ -1506,6 +1515,7 @@ function boot() {
   });
 
   document.addEventListener('keydown', (event) => {
+    if (document.querySelector('dialog[open]')) return;
     if (!$('sheet').hidden) return;
     if (!event.ctrlKey || event.altKey || event.metaKey) return;
     const key = event.key.toLowerCase();
@@ -1538,5 +1548,12 @@ function scheduleBoot() {
   }, 1200);
 }
 
+// A small shared contract for the separately loaded import surface (also used
+// by the offline preview and DOM tests, which evaluate scripts independently).
+window.organizerLocalBridge = {
+  request: api, create: make, log, toast,
+  isBusy: () => Object.values(state.busy).some(Boolean),
+  setBusy(value) { state.busy.local = value; updateActionState(); },
+};
 document.addEventListener('DOMContentLoaded', scheduleBoot);
 window.addEventListener('pywebviewready', scheduleBoot, { once: true });

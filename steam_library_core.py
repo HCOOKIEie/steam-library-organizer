@@ -26,6 +26,7 @@ from datetime import datetime
 from pathlib import Path
 
 import steam_appinfo
+from steam_series import series_for
 
 LOGGER = logging.getLogger(__name__)
 
@@ -372,6 +373,7 @@ FORM_NAMES = {
 MODE_LABELS = {
     "initial": "首字母",
     "genre": "种类",
+    "series": "系列",
     "form": "形式",
     "developer": "开发商",
     "publisher": "发行商",
@@ -841,7 +843,9 @@ class SteamLibrary:
                 "appid": appid,
                 "name": name or f"App {appid}",
                 "named": bool(name),
+                "name_en": _tidy(meta.get("name_en") or remote.get("name") or ""),
                 "form": form,
+                "franchises": [_tidy(v) for v in meta.get("franchises", []) if _tidy(v)],
                 "genres": [str(value) for value in (meta.get("genres") or [])],
                 "primary_genre": str(meta.get("primary_genre") or ""),
                 "developer": developers[0] if developers else developer,
@@ -922,6 +926,8 @@ class SteamLibrary:
 
     @staticmethod
     def _buckets(mode: str, item: dict) -> list[str]:
+        if mode == "series":
+            return series_for(item)
         if mode == "initial":
             if not item["named"]:
                 return ["资料缺失"]

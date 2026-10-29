@@ -185,3 +185,5 @@
   :root[data-appearance="calm"] .is-on,:root[data-appearance="calm"] .scope-option input:checked + .scope-card { outline:2px solid Highlight; outline-offset:-2px; }
   :root[data-appearance="calm"] .btn-primary { border:1px solid ButtonText; }
 }
+:root[data-appearance] .brand-mark { background:transparent; box-shadow:none; transform:none; }
+:root[data-appearance] .brand-mark img { display:block; width:100%; height:100%; object-fit:contain; }

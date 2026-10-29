@@ -21,6 +21,19 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from steam_library_core import SteamLibrary  # noqa: E402
 
 
+def local_games_fixture():
+    entries = [("原神", "YuanShen.exe", "recognized", False),
+               ("崩坏：星穹铁道", "StarRail.exe", "recognized", False),
+               ("绝区零", "ZenlessZoneZero.exe", "recognized", True),
+               ("My Adventure", "Adventure.exe", "review", False)]
+    return {"plan_id": "read-only-local-games", "cancelled": False, "warnings": [], "candidates": [
+        {"id": str(i), "name": name, "exe": f"D:\\Games\\{name}\\{exe}",
+         "start_dir": f"D:\\Games\\{name}", "args": "", "confidence": confidence,
+         "existing": existing, "source": "示例目录", "reason": "只读示例，不会访问或修改本机游戏"}
+        for i, (name, exe, confidence, existing) in enumerate(entries)
+    ]}
+
+
 SAMPLE_GAMES = [
     ("Baldur's Gate 3", "3", "Larian Studios"),
     ("Celeste", "23", "Maddy Makes Games"),
@@ -70,6 +83,16 @@ def sample_catalog(scope: str = "library", empty: bool = False) -> dict:
     return catalog
 
 
+def manager_fixture(empty=False):
+    return {"account": "example", "revision": "readonly", "can_undo": False,
+            "folders": [{"id": "playing", "name": "正在玩"}, {"id": "later", "name": "待玩"}],
+            "games": [{"id": f"steam:{appid}", "appid": appid, "name": game["name"], "source": "Steam",
+                       "installed": game["installed"], "steam_minutes": game["playtime"], "minutes": None,
+                       "folder": "playing" if appid < 5 else "later" if appid < 10 else "",
+                       "tags": ["单人"] if appid % 3 else []}
+                      for appid, game in sample_catalog(empty=empty).items()]}
+
+
 def preview_state(scenario: str, token: str) -> dict:
     total = 0 if scenario == "empty" else len(SAMPLE_GAMES)
     return {
@@ -96,7 +119,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(payload)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'")
+        self.send_header("Content-Security-Policy", "default-src 'self'; img-src 'self' data: https://shared.akamai.steamstatic.com https://shared.fastly.steamstatic.com; frame-ancestors 'none'")
         self.end_headers()
         self.wfile.write(payload)
 
@@ -116,6 +139,8 @@ class PreviewHandler(BaseHTTPRequestHandler):
                 self.respond(200, preview_state(self.server.scenario, self.server.token))
             return
         assets = {"/": ("index.html", "text/html"), "/index.html": ("index.html", "text/html"),
+                  "/local-games.css": ("local-games.css", "text/css"), "/local-games.js": ("local-games.js", "text/javascript"),
+                  "/library-manager.css": ("library-manager.css", "text/css"), "/library-manager.js": ("library-manager.js", "text/javascript"),
                   "/styles.css": ("styles.css", "text/css"), "/app.js": ("app.js", "text/javascript"),
                   "/p3r.css": ("p3r.css", "text/css"), "/appearance.js": ("appearance.js", "text/javascript"),
                   "/p5r.css": ("p5r.css", "text/css"),
@@ -127,6 +152,9 @@ class PreviewHandler(BaseHTTPRequestHandler):
                   "/calm.js": ("calm.js", "text/javascript"),
                   "/art/p3r-profile.webp": ("art/p3r-profile.webp", "image/webp"),
                   "/art/p5r-profile.webp": ("art/p5r-profile.webp", "image/webp"),
+                  "/art/app-icon.png": ("art/app-icon.png", "image/png"),
+                  "/artwork.css": ("artwork.css", "text/css"),
+                  "/artwork.js": ("artwork.js", "text/javascript"),
                   "/fonts/Anton-Regular.ttf": ("fonts/Anton-Regular.ttf", "font/ttf"),
                   "/fonts/BarlowCondensed-BlackItalic.ttf": ("fonts/BarlowCondensed-BlackItalic.ttf", "font/ttf"),
                   "/theme-bootstrap.js": ("theme-bootstrap.js", "text/javascript")}
@@ -142,6 +170,15 @@ class PreviewHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.valid_origin() or self.headers.get("X-Steam-Organizer-Token") != self.server.token:
             self.respond(403, {"error": "预览令牌无效"})
+            return
+        if urlparse(self.path).path == "/api/local-games/scan":
+            self.respond(200, local_games_fixture())
+            return
+        if urlparse(self.path).path == "/api/library/load":
+            self.respond(200, manager_fixture(self.server.scenario == "empty"))
+            return
+        if urlparse(self.path).path == "/api/artwork/load":
+            self.respond(200, {"account": "preview", "revision": "preview", "games": []})
             return
         if urlparse(self.path).path != "/api/plan":
             self.respond(403, {"error": "这是只读示例，不会操作真实 Steam。请运行 steam_modern.py 使用桌面版。"})
@@ -199,14 +236,14 @@ def export_preview(destination: Path, scenario: str = "ready", appearance: str =
     for scope in ("library", "games", "all"):
         catalog = sample_catalog(scope, scenario == "empty")
         groups = SteamLibrary("unused").build_groups(
-            ["initial", "genre", "form", "developer", "publisher", "state", "recent", "playtime"],
+            ["initial", "genre", "series", "form", "developer", "publisher", "state", "recent", "playtime"],
             developer_min=1, scope=scope, catalog=catalog,
         )
         for group in groups:
             group["sample"] = [catalog[appid]["name"] for appid in group["appids"][:6]]
         plans[scope] = groups
     fixtures = json.dumps({"state": preview_state(scenario, "offline-preview"), "plans": plans,
-                           "scenario": scenario}, ensure_ascii=False).replace("<", "\\u003c")
+                           "scenario": scenario, "local_games": local_games_fixture(), "manager": manager_fixture(scenario == "empty")}, ensure_ascii=False).replace("<", "\\u003c")
     bridge = r"""<script>
 (() => {
   const fixture = FIXTURES;
@@ -222,6 +259,11 @@ def export_preview(destination: Path, scenario: str = "ready", appearance: str =
       return { plan_id: 'read-only-example', groups: structuredClone(groups), summary: { existing_managed: 0, manual_preserved: 2 } };
     },
     apply: unavailable, restore: unavailable, choose_steam_root: unavailable,
+    scan_local_games: async () => structuredClone(fixture.local_games),
+    manage_library: async (action) => action === 'load' ? structuredClone(fixture.manager) : unavailable(),
+    manage_artwork: async (action) => action === 'load' ? {account:'preview',revision:'preview',games:[]} : unavailable(),
+    cancel_local_scan: async () => ({cancelled: true}),
+    import_local_games: unavailable, undo_local_import: unavailable, choose_game_folder: unavailable,
     reveal_folder: unavailable, open_log_file: unavailable,
   }};
 })();

@@ -26,9 +26,12 @@ if BUILD_MODE not in {"onefile", "onedir"}:
 
 ENTRY_POINT = PROJECT_ROOT / "steam_modern.py"
 UI_ROOT = PROJECT_ROOT / "steam_ui"
-UI_FILES = ("index.html", "styles.css", "p3r.css", "p5r.css", "vault.css", "theme-bootstrap.js", "appearance.js", "app.js", "vault.js", "persona-motion.css", "persona-motion.js", "calm.css", "calm.js", "art/p3r-profile.webp", "art/p5r-profile.webp", "fonts/BarlowCondensed-BlackItalic.ttf", "fonts/OFL-BarlowCondensed.txt", "fonts/Anton-Regular.ttf", "fonts/OFL-Anton.txt")
+UI_FILES = ("index.html", "styles.css", "p3r.css", "p5r.css", "vault.css", "theme-bootstrap.js", "appearance.js", "app.js", "vault.js", "persona-motion.css", "persona-motion.js", "calm.css", "calm.js", "local-games.css", "local-games.js", "library-manager.css", "library-manager.js", "art/p3r-profile.webp", "art/p5r-profile.webp", "fonts/BarlowCondensed-BlackItalic.ttf", "fonts/OFL-BarlowCondensed.txt", "fonts/Anton-Regular.ttf", "fonts/OFL-Anton.txt")
 
-required_paths = [ENTRY_POINT, VERSION_FILE]
+APP_ICON = UI_ROOT / "art" / "app-icon.ico"
+UI_FILES += ("art/app-icon.png", "art/app-icon.ico")
+UI_FILES += ("artwork.css", "artwork.js")
+required_paths = [ENTRY_POINT, VERSION_FILE, APP_ICON]
 required_paths.extend(UI_ROOT / name for name in UI_FILES)
 missing_paths = [str(path) for path in required_paths if not path.is_file()]
 if missing_paths:
@@ -102,6 +105,7 @@ common_exe_options = dict(
     codesign_identity=None,
     entitlements_file=None,
     version=str(VERSION_FILE),
+    icon=str(APP_ICON),
 )
 
 if BUILD_MODE == "onefile":

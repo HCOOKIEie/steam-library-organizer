@@ -12,6 +12,7 @@ import ctypes
 import logging
 import os
 import queue
+import sys
 import threading
 import time
 import traceback
@@ -55,6 +56,7 @@ MODE_DEFS = OrderedDict(
     [
         ("initial", ("首字母", "拼音 / A–Z")),
         ("genre", ("游戏类型", "同一游戏可进入多个类型")),
+        ("series", ("游戏系列", "按本地系列资料和名称规则分组")),
         ("form", ("条目形式", "游戏 / DLC / 工具")),
         ("developer", ("开发商", "按开发团队分组")),
         ("publisher", ("发行商", "按发行公司分组")),
@@ -1808,6 +1810,12 @@ def main(organizer: Organizer | None = None) -> None:
 
         enable_windows_dpi_awareness()
         root = tk.Tk()
+        icon_path = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent)) / "steam_ui" / "art" / "app-icon.ico"
+        if os.name == "nt" and icon_path.is_file():
+            try:
+                root.iconbitmap(default=str(icon_path))
+            except tk.TclError:
+                LOGGER.debug("无法设置窗口图标", exc_info=True)
         SteamDesktopApp(root, organizer=organizer)
         root.mainloop()
     except Exception as exc:
